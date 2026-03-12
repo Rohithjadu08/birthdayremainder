@@ -1,24 +1,11 @@
 'use server';
 
-import { z } from 'zod';
 import { students } from './db';
 import type { Student } from './types';
 import { revalidatePath } from 'next/cache';
 import { placeholderImages } from './placeholder-images.json';
-
-export const studentSchema = z.object({
-    id: z.string().optional(),
-    name: z.string().min(3, { message: 'Name must be at least 3 characters long.' }),
-    rollNumber: z.string().min(1, { message: 'Roll number is required.' }),
-    department: z.string().min(2, { message: 'Department is required.' }),
-    birthday: z.string().refine((val) => !isNaN(Date.parse(val)), { message: 'Invalid date format.' }),
-    photoUrl: z.string().url({ message: 'Please enter a valid URL.' }).or(z.literal('')),
-});
-
-export type State = {
-  errors: Record<string, string[]>;
-  message: string;
-};
+import { studentSchema } from './student-schema';
+import type { State } from './student-schema';
 
 
 export async function createStudent(prevState: State, formData: FormData) {

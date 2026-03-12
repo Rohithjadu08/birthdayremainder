@@ -23,7 +23,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { createStudent, updateStudent, studentSchema, type State } from '@/lib/student-actions';
+import { createStudent, updateStudent } from '@/lib/student-actions';
+import { studentSchema, type State } from '@/lib/student-schema';
 import { useFormStatus } from 'react-dom';
 import { useActionState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
