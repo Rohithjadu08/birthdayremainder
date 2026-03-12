@@ -18,8 +18,8 @@ export function LoginForm() {
   const auth = useAuth();
   const { toast } = useToast();
   
-  const [email, setEmail] = useState('professor@school.edu');
-  const [password, setPassword] = useState('Password123!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -89,9 +89,6 @@ export function LoginForm() {
             {isLoading ? <Loader2 className="animate-spin" /> : <LogIn />}
             {isLoading ? 'Signing In...' : 'Sign In'}
           </Button>
-           <p className="text-xs text-muted-foreground text-center">
-            Demo: professor@school.edu / Password123!
-          </p>
         </CardFooter>
       </Card>
     </form>
