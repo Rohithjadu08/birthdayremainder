@@ -18,7 +18,7 @@ export async function login(prevState: any, formData: FormData) {
       maxAge: 60 * 60 * 24 * 7, // One week
       path: '/',
     });
-    return { success: true };
+    redirect('/');
   }
 
   return {

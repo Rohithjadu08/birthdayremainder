@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LogIn } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -24,19 +23,16 @@ function SubmitButton() {
 export function LoginForm() {
   const [state, formAction] = useActionState(login, undefined);
   const { toast } = useToast();
-  const router = useRouter();
 
   useEffect(() => {
-    if (state?.success) {
-      router.push('/');
-    } else if (state?.message) {
+    if (state?.message) {
       toast({
         variant: "destructive",
         title: "Login Failed",
         description: state.message,
       });
     }
-  }, [state, toast, router]);
+  }, [state, toast]);
 
   return (
     <form action={formAction}>
