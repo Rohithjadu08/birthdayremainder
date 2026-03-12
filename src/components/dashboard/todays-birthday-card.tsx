@@ -5,13 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PartyPopper, MessageCircle, Mail } from 'lucide-react';
 import Confetti from '@/components/shared/confetti';
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase';
 import { generateBirthdayEmail } from '@/ai/flows/generate-birthday-email-flow';
 import type { GenerateBirthdayEmailOutput } from '@/ai/flows/generate-birthday-email-flow';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
+import { ToastAction } from '@/components/ui/toast';
 
 interface TodaysBirthdayCardProps {
   students: Student[];
@@ -21,7 +22,7 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
   const { toast } = useToast();
   const { user } = useUser();
 
-  const handleSendReminderEmail = async () => {
+  const handleSendReminderEmail = useCallback(async () => {
     if (students.length > 0 && user) {
         try {
             const studentInfo = students.map(s => ({ name: s.name, department: s.department }));
@@ -30,7 +31,6 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
               professorName: user.displayName || 'Professor',
             });
             
-            // Note: This email is addressed TO the admin/professor as a reminder
             const mailtoLink = `mailto:${user.email}?subject=${encodeURIComponent(emailContent.subject)}&body=${encodeURIComponent(emailContent.body)}`;
             window.open(mailtoLink, '_blank');
             
@@ -48,24 +48,38 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
             });
           }
     }
-  };
+  }, [students, user, toast]);
   
   useEffect(() => {
-    if (students.length > 0 && user) {
+    // This logic ensures the notification shows only once per day per browser session.
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const notificationKey = `birthdayNotification_${todayStr}`;
+
+    if (students.length > 0 && user && !sessionStorage.getItem(notificationKey)) {
         let description;
         if (students.length === 1) {
-          description = `It's ${students[0].name}'s birthday today!`;
+          description = `It's ${students[0].name}'s birthday today! Don't forget to wish them.`;
         } else {
           const names = students.map(s => s.name);
           const lastName = names.pop();
-          description = `It's ${names.join(', ')} and ${lastName}'s birthday today!`;
+          description = `It's ${names.join(', ')} and ${lastName}'s birthday today! Don't forget to wish them.`;
         }
+        
         toast({
           title: "🎉 Happy Birthday!",
           description: description,
+          duration: 9000,
+          action: (
+            <ToastAction 
+                altText="Send Reminder"
+                onClick={handleSendReminderEmail}>
+                Send Reminder
+            </ToastAction>
+          ),
         });
-      }
-  }, [students, user, toast]);
+        sessionStorage.setItem(notificationKey, 'true');
+    }
+  }, [students, user, toast, handleSendReminderEmail]);
 
 
   if (students.length === 0) {
