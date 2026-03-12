@@ -17,9 +17,9 @@ export default function AppSidebar() {
   return (
     <aside className="hidden w-64 flex-col border-r bg-card sm:flex">
       <div className="flex h-16 items-center border-b px-6">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
-          <Cake className="h-6 w-6 text-primary" />
-          <span>Birthday Reminder</span>
+        <Link href="/" className="flex items-center gap-2 font-semibold text-primary [text-shadow:0_0_8px_hsl(var(--primary)/0.7)]">
+          <Cake className="h-6 w-6" />
+          <span className="font-headline text-lg">Birthday Reminder</span>
         </Link>
       </div>
       <nav className="flex-1 p-4">

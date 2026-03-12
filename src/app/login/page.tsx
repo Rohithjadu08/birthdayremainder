@@ -29,9 +29,9 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center">
-          <Link href="/" className="flex items-center gap-2 font-semibold mb-4">
-            <Cake className="h-8 w-8 text-primary" />
-            <span className="text-2xl">Birthday Reminder</span>
+          <Link href="/" className="flex items-center gap-2 font-semibold mb-4 text-primary [text-shadow:0_0_8px_hsl(var(--primary)/0.7)]">
+            <Cake className="h-8 w-8" />
+            <span className="text-2xl font-headline">Birthday Reminder</span>
           </Link>
           <p className="text-muted-foreground text-center">
             Sign in to manage your student birthdays.
