@@ -14,9 +14,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle, Search, Edit, Trash2 } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Search, Edit, Trash2, Upload } from 'lucide-react';
 import { format } from 'date-fns';
 import { StudentDialog } from './student-dialog';
+import { StudentImportDialog } from './student-import-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   AlertDialog,
@@ -44,6 +45,7 @@ export default function StudentTable({ students: initialStudents }: StudentTable
   
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
   const departments = useMemo(() => ['all', ...Array.from(new Set(initialStudents.map(s => s.department)))], [initialStudents]);
@@ -80,6 +82,10 @@ export default function StudentTable({ students: initialStudents }: StudentTable
     setIsSubmitting(false);
     setIsAlertOpen(false);
   };
+
+  const handleImport = () => {
+    setIsImportDialogOpen(true);
+  };
   
   return (
     <>
@@ -102,7 +108,10 @@ export default function StudentTable({ students: initialStudents }: StudentTable
                     {departments.map(dep => <SelectItem key={dep} value={dep}>{dep === 'all' ? 'All Departments' : dep}</SelectItem>)}
                 </SelectContent>
             </Select>
-            <Button onClick={handleAdd} className="w-full sm:w-auto">
+            <Button onClick={handleImport} variant="outline" className="w-full sm:w-auto whitespace-nowrap">
+                <Upload className="mr-2 h-4 w-4" /> Import
+            </Button>
+            <Button onClick={handleAdd} className="w-full sm:w-auto whitespace-nowrap">
                 <PlusCircle className="mr-2 h-4 w-4" /> Add Student
             </Button>
         </div>
@@ -188,6 +197,11 @@ export default function StudentTable({ students: initialStudents }: StudentTable
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <StudentImportDialog
+        isOpen={isImportDialogOpen}
+        setIsOpen={setIsImportDialogOpen}
+      />
     </>
   );
 }
