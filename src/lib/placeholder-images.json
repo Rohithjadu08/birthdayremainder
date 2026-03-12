@@ -1,3 +1,64 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "student-1",
+      "description": "A smiling female student with glasses.",
+      "imageUrl": "https://picsum.photos/seed/1/200/200",
+      "imageHint": "student smiling"
+    },
+    {
+      "id": "student-2",
+      "description": "A male student writing in a notebook.",
+      "imageUrl": "https://picsum.photos/seed/2/200/200",
+      "imageHint": "student writing"
+    },
+    {
+      "id": "student-3",
+      "description": "A student wearing headphones and looking at a laptop.",
+      "imageUrl": "https://picsum.photos/seed/3/200/200",
+      "imageHint": "student laptop"
+    },
+    {
+      "id": "student-4",
+      "description": "A group of students collaborating.",
+      "imageUrl": "https://picsum.photos/seed/4/200/200",
+      "imageHint": "students group"
+    },
+    {
+      "id": "student-5",
+      "description": "A student reading a book in a library.",
+      "imageUrl": "https://picsum.photos/seed/5/200/200",
+      "imageHint": "student library"
+    },
+    {
+      "id": "student-6",
+      "description": "A student with a backpack walking on campus.",
+      "imageUrl": "https://picsum.photos/seed/6/200/200",
+      "imageHint": "student campus"
+    },
+    {
+      "id": "student-7",
+      "description": "A female student participating in a lab experiment.",
+      "imageUrl": "https://picsum.photos/seed/7/200/200",
+      "imageHint": "student science"
+    },
+    {
+      "id": "student-8",
+      "description": "A male student giving a presentation.",
+      "imageUrl": "https://picsum.photos/seed/8/200/200",
+      "imageHint": "student presentation"
+    },
+    {
+      "id": "student-9",
+      "description": "A student painting on a canvas.",
+      "imageUrl": "https://picsum.photos/seed/9/200/200",
+      "imageHint": "student art"
+    },
+    {
+      "id": "student-10",
+      "description": "A student playing a guitar.",
+      "imageUrl": "https://picsum.photos/seed/10/200/200",
+      "imageHint": "student music"
+    }
+  ]
 }
