@@ -14,7 +14,6 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Form,
   FormControl,
@@ -34,15 +33,6 @@ interface StudentSheetProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   student: Student | null;
-}
-
-function SubmitButton({ isEditing }: { isEditing: boolean }) {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending}>
-      {pending ? (isEditing ? 'Saving...' : 'Adding...') : (isEditing ? 'Save Changes' : 'Add Student')}
-    </Button>
-  );
 }
 
 export function StudentDialog({ isOpen, setIsOpen, student }: StudentSheetProps) {
@@ -94,6 +84,23 @@ export function StudentDialog({ isOpen, setIsOpen, student }: StudentSheetProps)
     }
   }, [state, toast, setIsOpen]);
 
+  function SubmitButton({ isEditing }: { isEditing: boolean }) {
+    const { pending } = useFormStatus();
+
+    const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
+      const isValid = await form.trigger();
+      if (!isValid) {
+        e.preventDefault();
+      }
+    };
+
+    return (
+      <Button type="submit" disabled={pending} onClick={handleClick}>
+        {pending ? (isEditing ? 'Saving...' : 'Adding...') : (isEditing ? 'Save Changes' : 'Add Student')}
+      </Button>
+    );
+  }
+
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetContent className="sm:max-w-lg">
@@ -108,7 +115,6 @@ export function StudentDialog({ isOpen, setIsOpen, student }: StudentSheetProps)
             <form
                 ref={formRef}
                 action={formAction}
-                onSubmit={form.handleSubmit(() => formRef.current?.submit())}
                 className="grid gap-4 py-4"
             >
              {student && <input type="hidden" name="id" value={student.id} />}
