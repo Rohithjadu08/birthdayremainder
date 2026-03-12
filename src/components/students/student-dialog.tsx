@@ -24,8 +24,8 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { createStudent, updateStudent, studentSchema, type State } from '@/lib/student-actions';
-import { useFormState, useFormStatus } from 'react-dom';
-import { useEffect, useRef } from 'react';
+import { useFormStatus } from 'react-dom';
+import { useActionState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { z } from 'zod';
 
@@ -73,7 +73,7 @@ export function StudentDialog({ isOpen, setIsOpen, student }: StudentSheetProps)
 
 
   const action = student ? updateStudent : createStudent;
-  const [state, formAction] = useFormState<State, FormData>(action, { message: '', errors: {} });
+  const [state, formAction] = useActionState<State, FormData>(action, { message: '', errors: {} });
 
   useEffect(() => {
     if (state.message) {
