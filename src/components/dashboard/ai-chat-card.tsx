@@ -39,7 +39,7 @@ export default function AiChatCard({ students }: AiChatCardProps) {
       const result = await generateBirthdayWish({
         studentName: student.name,
         studentDepartment: student.department,
-        studentSection: student.section,
+        studentSection: student.section || '',
       });
       setWishes(result.wishes);
     } catch (error) {
