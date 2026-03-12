@@ -18,10 +18,11 @@ export async function login(prevState: any, formData: FormData) {
       maxAge: 60 * 60 * 24 * 7, // One week
       path: '/',
     });
-    return redirect('/');
+    return { success: true };
   }
 
   return {
+    success: false,
     message: 'Invalid email or password.',
   };
 }
