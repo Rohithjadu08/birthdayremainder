@@ -3,13 +3,12 @@
 import type { Student } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PartyPopper, Mail } from 'lucide-react';
+import { PartyPopper } from 'lucide-react';
 import Confetti from '@/components/shared/confetti';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { generateBirthdayEmail } from '@/ai/flows/generate-birthday-email-flow';
 import type { GenerateBirthdayEmailInput } from '@/ai/flows/generate-birthday-email-flow';
-import { Button } from '@/components/ui/button';
 import { useUser } from '@/firebase';
 
 interface TodaysBirthdayCardProps {
@@ -19,33 +18,7 @@ interface TodaysBirthdayCardProps {
 export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps) {
   const { toast } = useToast();
   const { user } = useUser();
-  const [isGeneratingEmail, setIsGeneratingEmail] = useState(false);
-
-  const handleDraftEmail = async () => {
-    if (students.length === 0 || !user) return;
-    setIsGeneratingEmail(true);
-
-    try {
-        const emailInput: GenerateBirthdayEmailInput = {
-            students: students.map(s => ({ name: s.name, department: s.department })),
-            professorName: user.displayName || 'Professor'
-        };
-        const { subject, body } = await generateBirthdayEmail(emailInput);
-        
-        const mailtoLink = `mailto:${user.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-        window.location.href = mailtoLink;
-
-    } catch (error) {
-        console.error("Failed to generate email:", error);
-        toast({
-            variant: "destructive",
-            title: "Email Generation Failed",
-            description: "Could not draft the birthday reminder email.",
-        });
-    } finally {
-        setIsGeneratingEmail(false);
-    }
-  };
+  const [hasDraftedEmail, setHasDraftedEmail] = useState(false);
 
   useEffect(() => {
     if (students.length > 0) {
@@ -64,6 +37,46 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
       });
     }
   }, [students, toast]);
+
+  useEffect(() => {
+    const draftEmail = async () => {
+        if (students.length === 0 || !user || hasDraftedEmail) return;
+        
+        setHasDraftedEmail(true);
+
+        try {
+            const emailInput: GenerateBirthdayEmailInput = {
+                students: students.map(s => ({ name: s.name, department: s.department })),
+                professorName: user.displayName || 'Professor'
+            };
+            const { subject, body } = await generateBirthdayEmail(emailInput);
+            
+            const mailtoLink = `mailto:${user.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.location.href = mailtoLink;
+
+            toast({
+                title: "Email Drafted",
+                description: "Your birthday reminder email is ready in your email client.",
+            });
+
+        } catch (error) {
+            console.error("Failed to generate email:", error);
+            toast({
+                variant: "destructive",
+                title: "Email Generation Failed",
+                description: "Could not draft the birthday reminder email.",
+            });
+        }
+    };
+
+    // We delay the draft slightly to ensure the user sees the page content first.
+    const timer = setTimeout(() => {
+        draftEmail();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+
+  }, [students, user, hasDraftedEmail, toast]);
 
   if (students.length === 0) {
     return null;
@@ -94,12 +107,6 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
               </div>
             </div>
           ))}
-        </div>
-        <div className="mt-6 flex justify-end">
-            <Button onClick={handleDraftEmail} disabled={isGeneratingEmail || !user}>
-                <Mail className="mr-2 h-4 w-4" />
-                {isGeneratingEmail ? 'Drafting Email...' : 'Draft Reminder Email'}
-            </Button>
         </div>
       </CardContent>
       <Confetti />
