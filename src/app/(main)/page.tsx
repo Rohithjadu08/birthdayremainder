@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { getTodaysBirthdays, getUpcomingBirthdays } from '@/lib/data';
 import TodaysBirthdayCard from '@/components/dashboard/todays-birthday-card';
+import AiChatCard from '@/components/dashboard/ai-chat-card';
 import StatCard from '@/components/dashboard/stat-card';
 import UpcomingBirthdaysCard from '@/components/dashboard/upcoming-birthdays-card';
 import { Users, Cake, CalendarClock, Loader } from 'lucide-react';
@@ -51,6 +52,8 @@ export default function DashboardPage() {
       </div>
 
       <TodaysBirthdayCard students={todaysBirthdays} />
+
+      <AiChatCard studentsWithTodaysBirthday={todaysBirthdays} />
       
       <UpcomingBirthdaysCard students={upcomingBirthdays} />
 
