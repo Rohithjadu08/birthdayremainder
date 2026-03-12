@@ -1,18 +1,18 @@
 'use client';
 
-import { useAuth, useUser, initiateAnonymousSignIn } from '@/firebase';
+import { useUser } from '@/firebase';
 import { useEffect } from 'react';
 import { Loader } from 'lucide-react';
+import { redirect } from 'next/navigation';
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
-  const auth = useAuth();
   const { user, isUserLoading } = useUser();
 
   useEffect(() => {
     if (!isUserLoading && !user) {
-      initiateAnonymousSignIn(auth);
+      redirect('/login');
     }
-  }, [auth, user, isUserLoading]);
+  }, [user, isUserLoading]);
 
   if (isUserLoading || !user) {
     return (

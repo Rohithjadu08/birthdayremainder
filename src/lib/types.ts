@@ -6,4 +6,5 @@ export interface Student {
   birthday: string; // YYYY-MM-DD format
   photoUrl?: string;
   imageHint?: string;
+  phoneNumber?: string;
 }

@@ -123,6 +123,7 @@ export default function StudentTable({ students: initialStudents }: StudentTable
               <TableHead>Name</TableHead>
               <TableHead className="hidden md:table-cell">Roll Number</TableHead>
               <TableHead>Department</TableHead>
+              <TableHead className="hidden lg:table-cell">Phone</TableHead>
               <TableHead className="hidden md:table-cell">Birthday</TableHead>
               <TableHead><span className="sr-only">Actions</span></TableHead>
             </TableRow>
@@ -142,6 +143,7 @@ export default function StudentTable({ students: initialStudents }: StudentTable
                   </TableCell>
                   <TableCell className="hidden md:table-cell">{student.rollNumber}</TableCell>
                   <TableCell>{student.department}</TableCell>
+                  <TableCell className="hidden lg:table-cell">{student.phoneNumber}</TableCell>
                   <TableCell className="hidden md:table-cell">{format(new Date(student.birthday), 'MMMM d, yyyy')}</TableCell>
                   <TableCell>
                      <DropdownMenu>
@@ -166,7 +168,7 @@ export default function StudentTable({ students: initialStudents }: StudentTable
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="text-center h-24">
+                <TableCell colSpan={6} className="text-center h-24">
                   No students found.
                 </TableCell>
               </TableRow>

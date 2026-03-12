@@ -48,11 +48,12 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
 
         if (validation.success) {
           try {
-            const dataToCreate: Omit<Student, 'id' | 'imageHint' | 'photoUrl'> & { photoUrl?: string } = {
+            const dataToCreate: Omit<Student, 'id' | 'imageHint' | 'photoUrl'> & { photoUrl?: string, phoneNumber?: string } = {
                 name: validation.data.name,
                 rollNumber: validation.data.rollNumber,
                 department: validation.data.department,
                 birthday: validation.data.birthday,
+                phoneNumber: validation.data.phoneNumber,
             };
             await createStudent(firestore, dataToCreate);
             successCount++;
@@ -91,9 +92,9 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
         }
         const headers = lines[0].split(',').map(h => h.trim());
         const requiredHeaders = ['name', 'rollNumber', 'department', 'birthday'];
-        const hasHeaders = requiredHeaders.every(h => headers.includes(h));
+        const hasRequiredHeaders = requiredHeaders.every(h => headers.includes(h));
 
-        if (!hasHeaders) {
+        if (!hasRequiredHeaders) {
             toast({
                 variant: 'destructive',
                 title: 'Invalid CSV Headers',
@@ -107,6 +108,7 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
         const rollNumberIndex = headers.indexOf('rollNumber');
         const departmentIndex = headers.indexOf('department');
         const birthdayIndex = headers.indexOf('birthday');
+        const phoneNumberIndex = headers.indexOf('phoneNumber'); // Optional
         
         const rows = lines.slice(1);
         const studentsToImport = rows.map(row => {
@@ -116,6 +118,7 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
               rollNumber: data[rollNumberIndex]?.trim(),
               department: data[departmentIndex]?.trim(),
               birthday: data[birthdayIndex]?.trim(),
+              phoneNumber: phoneNumberIndex !== -1 ? data[phoneNumberIndex]?.trim() : undefined,
             };
         });
 
@@ -193,7 +196,7 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
         <DialogHeader>
           <DialogTitle>Import Students</DialogTitle>
           <DialogDescription>
-            Select a CSV or PDF file to bulk-import students. For CSV, the file must have a header row with columns: name, rollNumber, department, birthday (in YYYY-MM-DD format). For PDF, the file should contain a table with the same information.
+            Select a CSV or PDF file to bulk-import students. For CSV, the file must have a header row with columns: name, rollNumber, department, birthday, and optionally phoneNumber.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">

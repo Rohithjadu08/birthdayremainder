@@ -27,6 +27,10 @@
           "description": "The student's birth date, used for birthday notifications and calendar display.",
           "format": "date"
         },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The student's phone number for SMS reminders."
+        },
         "photoUrl": {
           "type": "string",
           "description": "An optional URL pointing to the student's profile photo.",
@@ -47,7 +51,7 @@
   },
   "auth": {
     "providers": [
-      "anonymous"
+      "email"
     ]
   },
   "firestore": {

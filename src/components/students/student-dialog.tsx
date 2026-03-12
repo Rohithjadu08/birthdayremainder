@@ -49,6 +49,7 @@ export function StudentDialog({ isOpen, setIsOpen, student }: StudentSheetProps)
         department: student?.department || '',
         birthday: student?.birthday || '',
         photoUrl: student?.photoUrl || '',
+        phoneNumber: student?.phoneNumber || '',
     },
   });
 
@@ -60,6 +61,7 @@ export function StudentDialog({ isOpen, setIsOpen, student }: StudentSheetProps)
         department: student?.department || '',
         birthday: student?.birthday || '',
         photoUrl: student?.photoUrl || '',
+        phoneNumber: student?.phoneNumber || '',
     })
   }, [student, form, isOpen])
 
@@ -152,6 +154,19 @@ export function StudentDialog({ isOpen, setIsOpen, student }: StudentSheetProps)
                     <FormLabel>Birthday</FormLabel>
                     <FormControl>
                         <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+             <FormField
+                control={form.control}
+                name="phoneNumber"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Phone Number (Optional)</FormLabel>
+                    <FormControl>
+                        <Input type="tel" placeholder="+1 555-555-5555" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>

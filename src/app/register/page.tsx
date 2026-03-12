@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import { Cake } from 'lucide-react';
-import { LoginForm } from '@/components/auth/login-form';
+import { RegisterForm } from '@/components/auth/register-form';
 import { useUser } from '@/firebase';
 import { redirect } from 'next/navigation';
 import { useEffect } from 'react';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const { user, isUserLoading } = useUser();
 
   useEffect(() => {
@@ -29,14 +29,14 @@ export default function LoginPage() {
             <span className="text-2xl">Birthday Reminder</span>
           </Link>
           <p className="text-muted-foreground text-center">
-            Sign in to manage your student birthdays.
+            Create an account to get started.
           </p>
         </div>
-        <LoginForm />
+        <RegisterForm />
         <p className="mt-6 text-center text-sm text-muted-foreground">
-          Don&apos;t have an account?{' '}
-          <Link href="/register" className="font-semibold text-primary hover:underline">
-            Register here
+          Already have an account?{' '}
+          <Link href="/login" className="font-semibold text-primary hover:underline">
+            Sign in
           </Link>
         </p>
       </div>

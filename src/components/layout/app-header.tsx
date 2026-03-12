@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Sheet,
   SheetContent,
@@ -17,8 +17,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Menu, Cake, LayoutDashboard, Users, CalendarDays } from 'lucide-react';
+import { Menu, Cake, LayoutDashboard, Users, CalendarDays, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/firebase';
+import { signOut } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
 
 
 const navItems = [
@@ -39,7 +42,21 @@ interface AppHeaderProps {
 
 export default function AppHeader({ user }: AppHeaderProps) {
     const pathname = usePathname();
+    const router = useRouter();
+    const auth = useAuth();
+    const { toast } = useToast();
     const title = pageTitles[pathname] || 'Dashboard';
+
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+            toast({ title: 'Logged Out', description: 'You have been successfully logged out.' });
+            router.push('/login');
+        } catch (error) {
+            console.error('Logout error:', error);
+            toast({ variant: 'destructive', title: 'Logout Failed', description: 'Could not log you out. Please try again.' });
+        }
+    };
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-card px-4 sm:px-6">
@@ -93,6 +110,11 @@ export default function AppHeader({ user }: AppHeaderProps) {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>Settings</DropdownMenuItem>
                 <DropdownMenuItem>Support</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
         </div>
