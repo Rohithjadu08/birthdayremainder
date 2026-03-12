@@ -10,10 +10,10 @@ import { generateBirthdayWish } from '@/ai/flows/generate-birthday-wish-flow';
 import { useToast } from '@/hooks/use-toast';
 
 interface AiChatCardProps {
-  studentsWithTodaysBirthday: Student[];
+  students: Student[];
 }
 
-export default function AiChatCard({ studentsWithTodaysBirthday }: AiChatCardProps) {
+export default function AiChatCard({ students }: AiChatCardProps) {
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
   const [wishes, setWishes] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -29,7 +29,7 @@ export default function AiChatCard({ studentsWithTodaysBirthday }: AiChatCardPro
       return;
     }
 
-    const student = studentsWithTodaysBirthday.find(s => s.id === selectedStudentId);
+    const student = students.find(s => s.id === selectedStudentId);
     if (!student) return;
 
     setIsLoading(true);
@@ -53,7 +53,7 @@ export default function AiChatCard({ studentsWithTodaysBirthday }: AiChatCardPro
     }
   };
 
-  if (studentsWithTodaysBirthday.length === 0) {
+  if (students.length === 0) {
     return (
         <Card>
             <CardHeader>
@@ -67,7 +67,7 @@ export default function AiChatCard({ studentsWithTodaysBirthday }: AiChatCardPro
             </CardHeader>
             <CardContent>
                 <p className="text-muted-foreground text-center py-8">
-                    No student birthdays today to generate wishes for.
+                    Add students to start generating birthday wishes.
                 </p>
             </CardContent>
         </Card>
@@ -82,7 +82,7 @@ export default function AiChatCard({ studentsWithTodaysBirthday }: AiChatCardPro
           Agentverse
         </CardTitle>
         <CardDescription>
-          Need inspiration? Select a student and let Agentverse help you craft the perfect birthday message.
+          Select any student and let Agentverse help you craft the perfect birthday message, anytime.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -92,7 +92,7 @@ export default function AiChatCard({ studentsWithTodaysBirthday }: AiChatCardPro
               <SelectValue placeholder="Select a student..." />
             </SelectTrigger>
             <SelectContent>
-              {studentsWithTodaysBirthday.map(student => (
+              {students.map(student => (
                 <SelectItem key={student.id} value={student.id}>
                   {student.name}
                 </SelectItem>

@@ -53,7 +53,7 @@ export default function DashboardPage() {
 
       <TodaysBirthdayCard students={todaysBirthdays} />
 
-      <AiChatCard studentsWithTodaysBirthday={todaysBirthdays} />
+      <AiChatCard students={allStudents || []} />
       
       <UpcomingBirthdaysCard students={upcomingBirthdays} />
 
