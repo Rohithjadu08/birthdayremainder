@@ -1,0 +1,92 @@
+{
+  "entities": {
+    "Student": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Student",
+      "type": "object",
+      "description": "Represents a student enrolled in the professor's class, including their personal details for birthday reminders.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Student entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The full name of the student."
+        },
+        "rollNumber": {
+          "type": "string",
+          "description": "The unique roll number assigned to the student within the institution or class."
+        },
+        "department": {
+          "type": "string",
+          "description": "The academic department to which the student belongs."
+        },
+        "birthdayDate": {
+          "type": "string",
+          "description": "The student's birth date, used for birthday notifications and calendar display.",
+          "format": "date"
+        },
+        "photoUrl": {
+          "type": "string",
+          "description": "An optional URL pointing to the student's profile photo.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "rollNumber",
+        "department",
+        "birthdayDate"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/admins/{adminId}",
+        "definition": {
+          "entityName": "Admin",
+          "schema": {
+            "$ref": "#/backend/entities/Admin"
+          },
+          "description": "Collection to store documents representing administrators, used for role-based access control (DBAC). Each document's ID is the admin's Firebase Auth UID. Allows for secure, explicit admin role checks in security rules. While the 'Admin' entity was not explicitly provided in the initial schema, it is inferred here as crucial for implementing the mandated DBAC principle and achieving authorization independence for the application.",
+          "params": [
+            {
+              "name": "adminId",
+              "description": "The Firebase Authentication UID of the administrator, which also serves as the document ID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/professors/{professorId}/students/{studentId}",
+        "definition": {
+          "entityName": "Student",
+          "schema": {
+            "$ref": "#/backend/entities/Student"
+          },
+          "description": "Subcollection containing details for students managed by a specific professor (the admin). The 'professorId' in the path serves as the owner's UID. This structure ensures strong ownership semantics and provides authorization independence, as the owner's UID is part of the document path. The 'id' field within the Student document should ideally match the 'studentId' document ID for consistency.",
+          "params": [
+            {
+              "name": "professorId",
+              "description": "The Firebase Authentication UID of the professor (admin) who owns these student records."
+            },
+            {
+              "name": "studentId",
+              "description": "The unique identifier for the student, which also serves as the document ID."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed following the core principles of Authorization Independence, DBAC, and QAPs to ensure a secure, scalable, and debuggable system for the 'Student Birthday Reminder' application. The primary goal is to provide a clean and robust authorization model for the single administrator (Professor) who manages student data.\n\n1.  **Admin Role Management (`/admins/{adminId}`):**\n    *   To implement Database Access Control (DBAC) and ensure Authorization Independence, a dedicated top-level collection `/admins` is created. This collection will hold a single document whose ID is the Firebase Authentication UID of the professor. The existence of this document signifies that the `adminId` (which matches `request.auth.uid`) is an administrator. This setup completely eliminates the need for `get()` calls to infer roles or hardcode UIDs in security rules, making authorization atomic and highly debuggable. It also ensures that the role information is stored directly in the database as mandated.\n    *   **Authorization Independence:** Access to this collection itself is restricted to the owner (`adminId`). The `exists()` check on this path in other rules (e.g., for student data) provides an atomic way to verify admin status without hierarchical dependencies.\n\n2.  **Student Data Management (`/professors/{professorId}/students/{studentId}`):**\n    *   Student data is stored in a subcollection under a professor's specific path: `/professors/{professorId}/students/{studentId}`. This structure explicitly establishes ownership. In this single-admin application, `professorId` will always be the UID of the single administrator.\n    *   **Authorization Independence:** The `professorId` is part of the document's path, directly available in security rules (`resource.data.professorId` or `professorId` from the path wildcard). This denormalizes the ownership context, meaning any security rule applied to a student document can determine its owner without performing a `get()` operation on a parent document (e.g., a `/professors/{professorId}` document). The rule would verify that `request.auth.uid` matches the `professorId` in the path, combined with an `exists()` check on the `/admins/{request.auth.uid}` collection to confirm administrative status.\n    *   **QAPs (Secure List Operations):** The hierarchical path ensures secure `list` operations. When the admin queries their students (e.g., `/professors/MY_UID/students`), the Firestore security rules can easily enforce that `MY_UID` must match `request.auth.uid` and that `request.auth.uid` is an administrator. This means queries inherently restrict data access to the authenticated and authorized professor, fulfilling the Query As Permissions (QAP) principle where rules are not filters."
+  }
+}
