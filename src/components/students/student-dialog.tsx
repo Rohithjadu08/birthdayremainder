@@ -22,6 +22,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createStudent, updateStudent } from '@/lib/student-actions';
 import { studentSchema } from '@/lib/student-schema';
 import { useState, useEffect } from 'react';
@@ -35,6 +36,16 @@ interface StudentSheetProps {
   student: Student | null;
 }
 
+const departments = [
+    "Artificial Intelligence and Machine Learning",
+    "Computer Science",
+    "Designing",
+    "Information Technology",
+    "Electronics",
+    "Mechanical",
+    "Civil"
+];
+
 export function StudentDialog({ isOpen, setIsOpen, student }: StudentSheetProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -47,6 +58,7 @@ export function StudentDialog({ isOpen, setIsOpen, student }: StudentSheetProps)
         name: student?.name || '',
         rollNumber: student?.rollNumber || '',
         department: student?.department || '',
+        section: student?.section || '',
         birthday: student?.birthday || '',
         photoUrl: student?.photoUrl || '',
         phoneNumber: student?.phoneNumber || '',
@@ -59,6 +71,7 @@ export function StudentDialog({ isOpen, setIsOpen, student }: StudentSheetProps)
         name: student?.name || '',
         rollNumber: student?.rollNumber || '',
         department: student?.department || '',
+        section: student?.section || '',
         birthday: student?.birthday || '',
         photoUrl: student?.photoUrl || '',
         phoneNumber: student?.phoneNumber || '',
@@ -139,8 +152,28 @@ export function StudentDialog({ isOpen, setIsOpen, student }: StudentSheetProps)
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Department</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a department" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {departments.map(dep => <SelectItem key={dep} value={dep}>{dep}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+             <FormField
+                control={form.control}
+                name="section"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Section</FormLabel>
                     <FormControl>
-                        <Input placeholder="Computer Science" {...field} />
+                        <Input placeholder="e.g., A" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>

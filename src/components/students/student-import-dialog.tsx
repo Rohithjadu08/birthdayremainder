@@ -52,6 +52,7 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
                 name: validation.data.name,
                 rollNumber: validation.data.rollNumber,
                 department: validation.data.department,
+                section: validation.data.section,
                 birthday: validation.data.birthday,
                 phoneNumber: validation.data.phoneNumber,
             };
@@ -91,7 +92,7 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
             return;
         }
         const headers = lines[0].split(',').map(h => h.trim());
-        const requiredHeaders = ['name', 'rollNumber', 'department', 'birthday'];
+        const requiredHeaders = ['name', 'rollNumber', 'department', 'section', 'birthday'];
         const hasRequiredHeaders = requiredHeaders.every(h => headers.includes(h));
 
         if (!hasRequiredHeaders) {
@@ -107,6 +108,7 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
         const nameIndex = headers.indexOf('name');
         const rollNumberIndex = headers.indexOf('rollNumber');
         const departmentIndex = headers.indexOf('department');
+        const sectionIndex = headers.indexOf('section');
         const birthdayIndex = headers.indexOf('birthday');
         const phoneNumberIndex = headers.indexOf('phoneNumber'); // Optional
         
@@ -117,6 +119,7 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
               name: data[nameIndex]?.trim(),
               rollNumber: data[rollNumberIndex]?.trim(),
               department: data[departmentIndex]?.trim(),
+              section: data[sectionIndex]?.trim(),
               birthday: data[birthdayIndex]?.trim(),
               phoneNumber: phoneNumberIndex !== -1 ? data[phoneNumberIndex]?.trim() : undefined,
             };
@@ -196,7 +199,7 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
         <DialogHeader>
           <DialogTitle>Import Students</DialogTitle>
           <DialogDescription>
-            Select a CSV or PDF file to bulk-import students. For CSV, the file must have a header row with columns: name, rollNumber, department, birthday, and optionally phoneNumber.
+            Select a CSV or PDF file to bulk-import students. For CSV, the file must have a header row with columns: name, rollNumber, department, section, birthday, and optionally phoneNumber.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">

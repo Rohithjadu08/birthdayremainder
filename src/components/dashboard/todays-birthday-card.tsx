@@ -3,7 +3,7 @@
 import type { Student } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PartyPopper, MessageCircle } from 'lucide-react';
+import { PartyPopper, MessageCircle, Mail } from 'lucide-react';
 import Confetti from '@/components/shared/confetti';
 import { useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -21,16 +21,37 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
   const { toast } = useToast();
   const { user } = useUser();
 
-  useEffect(() => {
-    const sendBirthdayReminders = async () => {
-      if (students.length > 0 && user) {
-        const todayStr = format(new Date(), 'yyyy-MM-dd');
-        const reminderSentKey = `reminderSent_${todayStr}_${user.uid}`;
-        
-        if (localStorage.getItem(reminderSentKey)) {
-          return;
-        }
+  const handleSendReminderEmail = async () => {
+    if (students.length > 0 && user) {
+        try {
+            const studentInfo = students.map(s => ({ name: s.name, department: s.department }));
+            const emailContent: GenerateBirthdayEmailOutput = await generateBirthdayEmail({
+              students: studentInfo,
+              professorName: user.displayName || 'Professor',
+            });
+            
+            // Note: This email is addressed TO the admin/professor as a reminder
+            const mailtoLink = `mailto:${user.email}?subject=${encodeURIComponent(emailContent.subject)}&body=${encodeURIComponent(emailContent.body)}`;
+            window.open(mailtoLink, '_blank');
+            
+            toast({
+                title: 'Email Drafted',
+                description: 'Your birthday reminder email draft has been opened in your email client.',
+            });
 
+          } catch (error) {
+            console.error("Failed to generate birthday email:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Could not generate the reminder email.',
+            });
+          }
+    }
+  };
+  
+  useEffect(() => {
+    if (students.length > 0 && user) {
         let description;
         if (students.length === 1) {
           description = `It's ${students[0].name}'s birthday today!`;
@@ -43,26 +64,7 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
           title: "🎉 Happy Birthday!",
           description: description,
         });
-
-        try {
-          const studentInfo = students.map(s => ({ name: s.name, department: s.department }));
-          const emailContent: GenerateBirthdayEmailOutput = await generateBirthdayEmail({
-            students: studentInfo,
-            professorName: user.displayName || 'Professor',
-          });
-          
-          const mailtoLink = `mailto:${user.email}?subject=${encodeURIComponent(emailContent.subject)}&body=${encodeURIComponent(emailContent.body)}`;
-          window.location.href = mailtoLink;
-          
-          localStorage.setItem(reminderSentKey, 'true');
-
-        } catch (error) {
-          console.error("Failed to generate birthday email:", error);
-        }
       }
-    };
-
-    sendBirthdayReminders();
   }, [students, user, toast]);
 
 
@@ -72,16 +74,22 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
 
   return (
     <Card className="relative overflow-hidden">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <PartyPopper className="text-accent" />
-          Happy Birthday!
-        </CardTitle>
+        <CardHeader className="flex flex-row items-start justify-between">
+            <div>
+                <CardTitle className="flex items-center gap-2">
+                <PartyPopper className="text-accent" />
+                Happy Birthday!
+                </CardTitle>
+                 <p className="text-muted-foreground text-sm mt-2">
+                    Wishing a very happy birthday to the following students today!
+                </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={handleSendReminderEmail}>
+                <Mail className="mr-2 h-4 w-4" />
+                Send Email Reminder to Myself
+            </Button>
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground mb-4">
-          Wishing a very happy birthday to the following students today! Click the message icon to wish them on WhatsApp.
-        </p>
         <div className="space-y-4">
           {students.map((student) => (
             <div key={student.id} className="flex items-center gap-4 p-4 rounded-lg bg-accent/10">
@@ -91,7 +99,7 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
               </Avatar>
               <div className="flex-1">
                 <p className="font-semibold">{student.name}</p>
-                <p className="text-sm text-muted-foreground">{student.department}</p>
+                <p className="text-sm text-muted-foreground">{student.department}, Section {student.section}</p>
               </div>
               {student.phoneNumber && (
                 <Button

@@ -20,7 +20,11 @@
         },
         "department": {
           "type": "string",
-          "description": "The academic department to which the student belongs."
+          "description": "The academic department to which the student belongs, e.g., 'Artificial Intelligence and Machine Learning', 'Computer Science', 'Designing'."
+        },
+        "section": {
+          "type": "string",
+          "description": "The section of the class the student is in, e.g., 'A', 'B'."
         },
         "birthday": {
           "type": "string",
@@ -45,6 +49,7 @@
         "name",
         "rollNumber",
         "department",
+        "section",
         "birthday"
       ]
     }

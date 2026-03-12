@@ -57,7 +57,7 @@ export default function BirthdayCalendar({ students }: BirthdayCalendarProps) {
                         </Avatar>
                         <div>
                             <p className="text-sm font-medium">{student.name}</p>
-                            <p className="text-xs text-muted-foreground">{student.department}</p>
+                            <p className="text-xs text-muted-foreground">{student.department}, Section {student.section}</p>
                         </div>
                     </div>
                 ))}

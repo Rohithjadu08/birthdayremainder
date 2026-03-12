@@ -13,6 +13,7 @@ import { z } from 'genkit';
 const GenerateBirthdayWishInputSchema = z.object({
   studentName: z.string().describe("The name of the student."),
   studentDepartment: z.string().describe("The student's department, which can be used for context."),
+  studentSection: z.string().describe("The student's class section, for additional context."),
 });
 export type GenerateBirthdayWishInput = z.infer<typeof GenerateBirthdayWishInputSchema>;
 
@@ -31,7 +32,7 @@ const prompt = ai.definePrompt({
   output: { schema: GenerateBirthdayWishOutputSchema },
   prompt: `You are a creative and thoughtful assistant for a professor.
 Your task is to generate three distinct, creative, and heartfelt birthday wish ideas for a student named {{studentName}}.
-The student is in the {{studentDepartment}} department. You can use this department context to make one of the wishes more specific and fun.
+The student is in the {{studentDepartment}} department, section {{studentSection}}. You can use this context to make one of the wishes more specific and fun.
 
 For example, if the department is 'Computer Science', you could include a coding-related pun. If it's 'Literature', you could use a literary quote.
 

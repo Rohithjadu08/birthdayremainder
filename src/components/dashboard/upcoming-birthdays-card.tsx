@@ -28,7 +28,7 @@ export default function UpcomingBirthdaysCard({ students }: UpcomingBirthdaysCar
                 </Avatar>
                 <div className="flex-1">
                   <p className="font-semibold">{student.name}</p>
-                  <p className="text-sm text-muted-foreground">{student.department}</p>
+                  <p className="text-sm text-muted-foreground">{student.department}, Section {student.section}</p>
                 </div>
                 <div className="text-right">
                     <p className="text-sm font-medium">

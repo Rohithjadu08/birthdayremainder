@@ -14,6 +14,7 @@ const StudentDataSchema = z.object({
     name: z.string().describe("The full name of the student."),
     rollNumber: z.string().describe("The unique roll number assigned to the student."),
     department: z.string().describe("The academic department of the student."),
+    section: z.string().describe("The section of the class the student is in (e.g., A, B)."),
     birthday: z.string().describe("The student's birth date in YYYY-MM-DD format."),
 });
 
@@ -41,9 +42,9 @@ const prompt = ai.definePrompt({
   output: { schema: ExtractStudentsOutputSchema },
   prompt: `You are an expert data entry specialist. Your task is to extract student information from the provided document.
 
-The document contains a list of students with their name, roll number, department, and birthday.
+The document contains a list of students with their name, roll number, department, section, and birthday.
 
-Extract all students and return them as a JSON object containing a "students" array. Each object in the array must have the following fields: "name", "rollNumber", "department", and "birthday".
+Extract all students and return them as a JSON object containing a "students" array. Each object in the array must have the following fields: "name", "rollNumber", "department", "section", and "birthday".
 
 Ensure the "birthday" field is in YYYY-MM-DD format. If the date is in a different format, convert it.
 
