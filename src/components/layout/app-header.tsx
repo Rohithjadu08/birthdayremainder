@@ -17,8 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Menu, Cake, LayoutDashboard, Users, CalendarDays, LogOut } from 'lucide-react';
-import { logout } from '@/lib/actions';
+import { Menu, Cake, LayoutDashboard, Users, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 
@@ -77,34 +76,25 @@ export default function AppHeader({ user }: AppHeaderProps) {
       <div className="flex w-full items-center gap-4">
         <h1 className="text-xl font-semibold">{title}</h1>
         <div className="ml-auto flex items-center gap-4">
-            <form action={logout}>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full">
-                        <Avatar>
-                        <AvatarImage src="https://picsum.photos/seed/prof/40/40" alt={user?.name || "User"} data-ai-hint="person professor" />
-                        <AvatarFallback>{user?.name?.[0] || 'P'}</AvatarFallback>
-                        </Avatar>
-                    </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>
-                        <p>{user?.name || 'Professor'}</p>
-                        <p className="text-xs text-muted-foreground font-normal">{user?.email || 'professor@school.edu'}</p>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem>Settings</DropdownMenuItem>
-                    <DropdownMenuItem>Support</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                        <button type="submit" className="w-full text-left flex items-center">
-                            <LogOut className="mr-2 h-4 w-4" />
-                            <span>Logout</span>
-                        </button>
-                    </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </form>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                    <Avatar>
+                    <AvatarImage src="https://picsum.photos/seed/prof/40/40" alt={user?.name || "User"} data-ai-hint="person professor" />
+                    <AvatarFallback>{user?.name?.[0] || 'P'}</AvatarFallback>
+                    </Avatar>
+                </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                <DropdownMenuLabel>
+                    <p>{user?.name || 'Professor'}</p>
+                    <p className="text-xs text-muted-foreground font-normal">{user?.email || 'professor@school.edu'}</p>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Settings</DropdownMenuItem>
+                <DropdownMenuItem>Support</DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
         </div>
       </div>
     </header>

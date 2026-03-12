@@ -1,14 +1,12 @@
 import AppHeader from '@/components/layout/app-header';
 import AppSidebar from '@/components/layout/app-sidebar';
-import { cookies } from 'next/headers';
 
 export default function MainLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const sessionCookie = cookies().get('session');
-  const user = sessionCookie ? JSON.parse(sessionCookie.value) : null;
+  const user = { name: 'Professor', email: 'professor@school.edu' };
 
   return (
     <div className="flex min-h-screen w-full">
