@@ -20,7 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Menu, Cake, LayoutDashboard, Users, CalendarDays, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/firebase';
-import { signOut } from 'firebase/auth';
+import { signOut, type User } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 
 
@@ -37,7 +37,7 @@ const pageTitles: { [key: string]: string } = {
 };
 
 interface AppHeaderProps {
-    user: { name: string; email: string } | null;
+    user: User | null;
 }
 
 export default function AppHeader({ user }: AppHeaderProps) {
@@ -97,14 +97,14 @@ export default function AppHeader({ user }: AppHeaderProps) {
                 <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
                     <Avatar>
-                    <AvatarImage src="https://picsum.photos/seed/prof/40/40" alt={user?.name || "User"} data-ai-hint="person professor" />
-                    <AvatarFallback>{user?.name?.[0] || 'P'}</AvatarFallback>
+                    <AvatarImage src={user?.photoURL || "https://picsum.photos/seed/prof/40/40"} alt={user?.displayName || "User"} data-ai-hint="person professor" />
+                    <AvatarFallback>{user?.displayName?.[0] || 'P'}</AvatarFallback>
                     </Avatar>
                 </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                 <DropdownMenuLabel>
-                    <p>{user?.name || 'Professor'}</p>
+                    <p>{user?.displayName || 'Professor'}</p>
                     <p className="text-xs text-muted-foreground font-normal">{user?.email || 'professor@school.edu'}</p>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />

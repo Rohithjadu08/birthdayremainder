@@ -6,6 +6,7 @@ import { RegisterForm } from '@/components/auth/register-form';
 import { useUser } from '@/firebase';
 import { redirect } from 'next/navigation';
 import { useEffect } from 'react';
+import { Loader } from 'lucide-react';
 
 export default function RegisterPage() {
   const { user, isUserLoading } = useUser();
@@ -17,7 +18,11 @@ export default function RegisterPage() {
   }, [user, isUserLoading]);
 
   if (isUserLoading || user) {
-    return null; // or a loading spinner
+    return (
+        <div className="flex h-screen w-full items-center justify-center">
+            <Loader className="h-8 w-8 animate-spin" />
+        </div>
+    );
   }
 
   return (
