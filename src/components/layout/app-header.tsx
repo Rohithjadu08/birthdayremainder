@@ -34,8 +34,11 @@ const pageTitles: { [key: string]: string } = {
     '/calendar': 'Birthday Calendar',
 };
 
+interface AppHeaderProps {
+    user: { name: string; email: string } | null;
+}
 
-export default function AppHeader() {
+export default function AppHeader({ user }: AppHeaderProps) {
     const pathname = usePathname();
     const title = pageTitles[pathname] || 'Dashboard';
 
@@ -79,15 +82,15 @@ export default function AppHeader() {
                     <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="rounded-full">
                         <Avatar>
-                        <AvatarImage src="https://picsum.photos/seed/prof/40/40" alt="Professor" data-ai-hint="person professor" />
-                        <AvatarFallback>P</AvatarFallback>
+                        <AvatarImage src="https://picsum.photos/seed/prof/40/40" alt={user?.name || "User"} data-ai-hint="person professor" />
+                        <AvatarFallback>{user?.name?.[0] || 'P'}</AvatarFallback>
                         </Avatar>
                     </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                     <DropdownMenuLabel>
-                        <p>Professor</p>
-                        <p className="text-xs text-muted-foreground font-normal">professor@school.edu</p>
+                        <p>{user?.name || 'Professor'}</p>
+                        <p className="text-xs text-muted-foreground font-normal">{user?.email || 'professor@school.edu'}</p>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem>Settings</DropdownMenuItem>

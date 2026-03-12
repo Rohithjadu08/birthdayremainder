@@ -1,13 +1,14 @@
 'use client';
 
 import { useFormStatus } from 'react-dom';
-import { useActionState } from 'react';
+import { useActionState, useEffect } from 'react';
 import { login } from '@/lib/actions';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LogIn } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -21,18 +22,22 @@ function SubmitButton() {
 
 export function LoginForm() {
   const [state, formAction] = useActionState(login, undefined);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (state?.message) {
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: state.message,
+      });
+    }
+  }, [state, toast]);
 
   return (
     <form action={formAction}>
       <Card>
-        <CardHeader>
-          {state?.message && (
-            <p className="text-sm text-destructive text-center bg-destructive/10 p-3 rounded-md">
-              {state.message}
-            </p>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-6">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -41,11 +46,12 @@ export function LoginForm() {
               type="email"
               placeholder="professor@school.edu"
               required
+              defaultValue="professor@school.edu"
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" name="password" type="password" required placeholder="••••••••"/>
+            <Input id="password" name="password" type="password" required placeholder="••••••••" defaultValue="password123"/>
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
