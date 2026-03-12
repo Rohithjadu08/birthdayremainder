@@ -39,7 +39,7 @@ export function LoginForm() {
       console.error(error);
       let errorMessage = "An unexpected error occurred. Please try again.";
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        errorMessage = "Invalid email or password. Please try again.";
+        errorMessage = "Invalid email or password. Please check your credentials or create a new account.";
       }
       setError(errorMessage);
       setIsLoading(false);
