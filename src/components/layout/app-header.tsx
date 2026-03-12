@@ -108,9 +108,6 @@ export default function AppHeader({ user }: AppHeaderProps) {
                     <p className="text-xs text-muted-foreground font-normal">{user?.email || 'professor@school.edu'}</p>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Settings</DropdownMenuItem>
-                <DropdownMenuItem>Support</DropdownMenuItem>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive focus:bg-destructive/10">
                     <LogOut className="mr-2 h-4 w-4" />
                     Logout
