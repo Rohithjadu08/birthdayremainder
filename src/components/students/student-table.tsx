@@ -29,24 +29,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { deleteStudent } from '@/lib/student-actions';
-import { useFormStatus } from 'react-dom';
+import { useFirestore } from '@/firebase';
+
 
 interface StudentTableProps {
   students: Student[];
 }
 
-function DeleteButton() {
-  const { pending } = useFormStatus();
-  return (
-    <AlertDialogAction type="submit" disabled={pending} className="bg-destructive hover:bg-destructive/90">
-      {pending ? 'Deleting...' : 'Delete'}
-    </AlertDialogAction>
-  );
-}
-
 export default function StudentTable({ students: initialStudents }: StudentTableProps) {
+  const firestore = useFirestore();
   const [searchTerm, setSearchTerm] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('all');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
@@ -74,9 +68,17 @@ export default function StudentTable({ students: initialStudents }: StudentTable
     setIsSheetOpen(true);
   };
 
-  const handleDelete = (student: Student) => {
+  const handleDeleteConfirm = (student: Student) => {
     setSelectedStudent(student);
     setIsAlertOpen(true);
+  };
+
+  const handleDeleteAction = async () => {
+    if (!selectedStudent) return;
+    setIsSubmitting(true);
+    await deleteStudent(firestore, selectedStudent.id);
+    setIsSubmitting(false);
+    setIsAlertOpen(false);
   };
   
   return (
@@ -145,7 +147,7 @@ export default function StudentTable({ students: initialStudents }: StudentTable
                             <Edit className="mr-2 h-4 w-4" /> Edit
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleDelete(student)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                        <DropdownMenuItem onClick={() => handleDeleteConfirm(student)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
                             <Trash2 className="mr-2 h-4 w-4" /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -180,10 +182,9 @@ export default function StudentTable({ students: initialStudents }: StudentTable
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <form action={deleteStudent} onSubmit={() => setIsAlertOpen(false)}>
-              <input type="hidden" name="id" value={selectedStudent?.id || ''} />
-              <DeleteButton />
-            </form>
+            <AlertDialogAction onClick={handleDeleteAction} disabled={isSubmitting} className="bg-destructive hover:bg-destructive/90">
+              {isSubmitting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

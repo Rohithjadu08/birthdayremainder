@@ -1,27 +1,22 @@
 import type { Student } from './types';
-import { students as allStudents } from './db';
-import { format, isToday, isWithinInterval, addDays, startOfToday, endOfToday, endOfDay } from 'date-fns';
+import { isToday, isWithinInterval, addDays, startOfToday, endOfToday, endOfDay } from 'date-fns';
 
-// API functions to simulate database calls
-export async function getStudents(): Promise<Student[]> {
-  // In a real app, you would fetch from a database
-  return Promise.resolve(allStudents);
-}
+// These functions now operate on a list of students provided as an argument.
 
-export async function getTodaysBirthdays(): Promise<Student[]> {
+export function getTodaysBirthdays(allStudents: Student[]): Student[] {
   const today = new Date();
   
-  return Promise.resolve(allStudents.filter(student => {
+  return allStudents.filter(student => {
     const studentBirthday = new Date(student.birthday);
     return studentBirthday.getMonth() === today.getMonth() && studentBirthday.getDate() === today.getDate();
-  }));
+  });
 }
 
-export async function getUpcomingBirthdays(): Promise<Student[]> {
+export function getUpcomingBirthdays(allStudents: Student[]): Student[] {
   const today = startOfToday();
   const oneWeekFromNow = endOfDay(addDays(today, 7));
 
-  return Promise.resolve(allStudents.filter(student => {
+  return allStudents.filter(student => {
     const birthday = new Date(student.birthday);
     const studentBirthdayThisYear = new Date(today.getFullYear(), birthday.getMonth(), birthday.getDate());
     
@@ -48,5 +43,5 @@ export async function getUpcomingBirthdays(): Promise<Student[]> {
       const resolvedDateB = birthdayBThisYear < today ? new Date(today.getFullYear() + 1, dateB.getMonth(), dateB.getDate()) : birthdayBThisYear;
 
       return resolvedDateA.getTime() - resolvedDateB.getTime();
-  }));
+  });
 }

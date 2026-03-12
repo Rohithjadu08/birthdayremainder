@@ -23,11 +23,11 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { createStudent, updateStudent } from '@/lib/student-actions';
-import { studentSchema, type State } from '@/lib/student-schema';
-import { useFormStatus } from 'react-dom';
-import { useActionState, useEffect, useRef } from 'react';
+import { studentSchema } from '@/lib/student-schema';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { z } from 'zod';
+import { useFirestore } from '@/firebase';
 
 interface StudentSheetProps {
   isOpen: boolean;
@@ -37,7 +37,8 @@ interface StudentSheetProps {
 
 export function StudentDialog({ isOpen, setIsOpen, student }: StudentSheetProps) {
   const { toast } = useToast();
-  const formRef = useRef<HTMLFormElement>(null);
+  const firestore = useFirestore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<z.infer<typeof studentSchema>>({
     resolver: zodResolver(studentSchema),
@@ -63,43 +64,30 @@ export function StudentDialog({ isOpen, setIsOpen, student }: StudentSheetProps)
   }, [student, form, isOpen])
 
 
-  const action = student ? updateStudent : createStudent;
-  const [state, formAction] = useActionState<State, FormData>(action, { message: '', errors: {} });
-
-  useEffect(() => {
-    if (state.message) {
-      if(Object.keys(state.errors).length > 0) {
-        toast({
-          title: "Uh oh! Something went wrong.",
-          description: state.message,
-          variant: "destructive",
-        })
-      } else {
-        toast({
-          title: "Success!",
-          description: state.message,
-        })
+  const onSubmit = async (values: z.infer<typeof studentSchema>) => {
+    setIsSubmitting(true);
+    try {
+        if (student) {
+            await updateStudent(firestore, student.id, values);
+            toast({ title: "Success!", description: "Student updated successfully." });
+        } else {
+            const { id, ...newStudentData } = values;
+            await createStudent(firestore, newStudentData);
+            toast({ title: "Success!", description: "Student added successfully." });
+        }
         setIsOpen(false);
-      }
+    } catch (error) {
+        console.error("Form submission error:", error);
+        toast({
+            title: "Uh oh! Something went wrong.",
+            description: "An unexpected error occurred.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsSubmitting(false);
     }
-  }, [state, toast, setIsOpen]);
+  };
 
-  function SubmitButton({ isEditing }: { isEditing: boolean }) {
-    const { pending } = useFormStatus();
-
-    const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
-      const isValid = await form.trigger();
-      if (!isValid) {
-        e.preventDefault();
-      }
-    };
-
-    return (
-      <Button type="submit" disabled={pending} onClick={handleClick}>
-        {pending ? (isEditing ? 'Saving...' : 'Adding...') : (isEditing ? 'Save Changes' : 'Add Student')}
-      </Button>
-    );
-  }
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -113,11 +101,10 @@ export function StudentDialog({ isOpen, setIsOpen, student }: StudentSheetProps)
         
         <Form {...form}>
             <form
-                ref={formRef}
-                action={formAction}
+                onSubmit={form.handleSubmit(onSubmit)}
                 className="grid gap-4 py-4"
             >
-             {student && <input type="hidden" name="id" value={student.id} />}
+             {student && <input type="hidden" {...form.register('id')} />}
              <FormField
                 control={form.control}
                 name="name"
@@ -185,9 +172,11 @@ export function StudentDialog({ isOpen, setIsOpen, student }: StudentSheetProps)
             />
             <SheetFooter className="mt-4">
                 <SheetClose asChild>
-                    <Button variant="outline">Cancel</Button>
+                    <Button type="button" variant="outline">Cancel</Button>
                 </SheetClose>
-                <SubmitButton isEditing={!!student} />
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (student ? 'Saving...' : 'Adding...') : (student ? 'Save Changes' : 'Add Student')}
+                </Button>
             </SheetFooter>
           </form>
         </Form>
