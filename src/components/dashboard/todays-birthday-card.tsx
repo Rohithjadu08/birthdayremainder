@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { generateBirthdayEmail } from '@/ai/flows/generate-birthday-email-flow';
 import type { GenerateBirthdayEmailInput } from '@/ai/flows/generate-birthday-email-flow';
 import { Button } from '@/components/ui/button';
+import { useUser } from '@/firebase';
 
 interface TodaysBirthdayCardProps {
   students: Student[];
@@ -17,20 +18,21 @@ interface TodaysBirthdayCardProps {
 
 export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps) {
   const { toast } = useToast();
+  const { user } = useUser();
   const [isGeneratingEmail, setIsGeneratingEmail] = useState(false);
 
   const handleDraftEmail = async () => {
-    if (students.length === 0) return;
+    if (students.length === 0 || !user) return;
     setIsGeneratingEmail(true);
 
     try {
         const emailInput: GenerateBirthdayEmailInput = {
             students: students.map(s => ({ name: s.name, department: s.department })),
-            professorName: 'Professor' // Assuming a static name for now
+            professorName: user.displayName || 'Professor'
         };
         const { subject, body } = await generateBirthdayEmail(emailInput);
         
-        const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        const mailtoLink = `mailto:${user.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
         window.location.href = mailtoLink;
 
     } catch (error) {
@@ -94,7 +96,7 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
           ))}
         </div>
         <div className="mt-6 flex justify-end">
-            <Button onClick={handleDraftEmail} disabled={isGeneratingEmail}>
+            <Button onClick={handleDraftEmail} disabled={isGeneratingEmail || !user}>
                 <Mail className="mr-2 h-4 w-4" />
                 {isGeneratingEmail ? 'Drafting Email...' : 'Draft Reminder Email'}
             </Button>
