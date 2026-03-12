@@ -41,5 +41,18 @@ const createInitialStudents = (): Student[] => {
 
 // This will act as our in-memory database.
 // In a real app, this would be a database connection.
-// In a dev environment with hot-reloading, this will be reset on every file change.
-export let students: Student[] = createInitialStudents();
+// In dev, we store it on the global object to prevent it from being reset by HMR.
+declare global {
+  var students: Student[] | undefined;
+}
+
+export let students: Student[];
+
+if (process.env.NODE_ENV === 'production') {
+  students = createInitialStudents();
+} else {
+  if (!global.students) {
+    global.students = createInitialStudents();
+  }
+  students = global.students;
+}
