@@ -1,17 +1,16 @@
 'use client';
 
 import type { Student } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { PartyPopper, Mail, Loader2 } from 'lucide-react';
+import { PartyPopper } from 'lucide-react';
 import Confetti from '@/components/shared/confetti';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase';
 import { generateBirthdayEmail } from '@/ai/flows/generate-birthday-email-flow';
 import type { GenerateBirthdayEmailOutput } from '@/ai/flows/generate-birthday-email-flow';
-
+import { format } from 'date-fns';
 
 interface TodaysBirthdayCardProps {
   students: Student[];
@@ -20,51 +19,59 @@ interface TodaysBirthdayCardProps {
 export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps) {
   const { toast } = useToast();
   const { user } = useUser();
-  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
-    if (students.length > 0) {
-      let description;
-      if (students.length === 1) {
-        description = `It's ${students[0].name}'s birthday today!`;
-      } else {
-        const names = students.map(s => s.name);
-        const lastName = names.pop();
-        description = `It's ${names.join(', ')} and ${lastName}'s birthday today!`;
+    const sendBirthdayReminders = async () => {
+      if (students.length > 0 && user) {
+        const todayStr = format(new Date(), 'yyyy-MM-dd');
+        const reminderSentKey = `reminderSent_${todayStr}_${user.uid}`;
+        
+        // Prevent reminder from being sent more than once per day per user
+        if (localStorage.getItem(reminderSentKey)) {
+          return;
+        }
+
+        // 1. Show toast notification
+        let description;
+        if (students.length === 1) {
+          description = `It's ${students[0].name}'s birthday today!`;
+        } else {
+          const names = students.map(s => s.name);
+          const lastName = names.pop();
+          description = `It's ${names.join(', ')} and ${lastName}'s birthday today!`;
+        }
+        toast({
+          title: "🎉 Happy Birthday!",
+          description: description,
+        });
+
+        // 2. Automatically draft email reminder
+        try {
+          const studentInfo = students.map(s => ({ name: s.name, department: s.department }));
+          const emailContent: GenerateBirthdayEmailOutput = await generateBirthdayEmail({
+            students: studentInfo,
+            professorName: user.displayName || 'Professor',
+          });
+          
+          const mailtoLink = `mailto:${user.email}?subject=${encodeURIComponent(emailContent.subject)}&body=${encodeURIComponent(emailContent.body)}`;
+          window.location.href = mailtoLink;
+          
+          // 3. Mark reminder as sent for today
+          localStorage.setItem(reminderSentKey, 'true');
+
+        } catch (error) {
+          console.error("Failed to generate birthday email:", error);
+          toast({
+            variant: "destructive",
+            title: "Could not generate email",
+            description: "There was an error while trying to create the reminder email.",
+          });
+        }
       }
+    };
 
-      toast({
-        title: "🎉 Happy Birthday!",
-        description: description,
-      });
-    }
-  }, [students, toast]);
-
-  const handleSendReminder = async () => {
-    if (!user || students.length === 0) return;
-    setIsGenerating(true);
-
-    try {
-      const studentInfo = students.map(s => ({ name: s.name, department: s.department }));
-      const emailContent: GenerateBirthdayEmailOutput = await generateBirthdayEmail({
-        students: studentInfo,
-        professorName: user.displayName || 'Professor',
-      });
-      
-      const mailtoLink = `mailto:${user.email}?subject=${encodeURIComponent(emailContent.subject)}&body=${encodeURIComponent(emailContent.body)}`;
-      window.location.href = mailtoLink;
-
-    } catch (error) {
-      console.error("Failed to generate birthday email:", error);
-      toast({
-        variant: "destructive",
-        title: "Could not generate email",
-        description: "There was an error while trying to create the reminder email.",
-      });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+    sendBirthdayReminders();
+  }, [students, user, toast]);
 
 
   if (students.length === 0) {
@@ -98,12 +105,6 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
           ))}
         </div>
       </CardContent>
-      <CardFooter>
-        <Button onClick={handleSendReminder} disabled={isGenerating || !user} className="w-full">
-            {isGenerating ? <Loader2 className="animate-spin" /> : <Mail />}
-            {isGenerating ? 'Generating...' : 'Send Email Reminder to Myself'}
-        </Button>
-      </CardFooter>
       <Confetti />
     </Card>
   );
