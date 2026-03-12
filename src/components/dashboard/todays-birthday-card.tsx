@@ -3,7 +3,7 @@
 import type { Student } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PartyPopper } from 'lucide-react';
+import { PartyPopper, MessageCircle } from 'lucide-react';
 import Confetti from '@/components/shared/confetti';
 import { useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -11,6 +11,7 @@ import { useUser } from '@/firebase';
 import { generateBirthdayEmail } from '@/ai/flows/generate-birthday-email-flow';
 import type { GenerateBirthdayEmailOutput } from '@/ai/flows/generate-birthday-email-flow';
 import { format } from 'date-fns';
+import { Button } from '@/components/ui/button';
 
 interface TodaysBirthdayCardProps {
   students: Student[];
@@ -26,12 +27,10 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
         const todayStr = format(new Date(), 'yyyy-MM-dd');
         const reminderSentKey = `reminderSent_${todayStr}_${user.uid}`;
         
-        // Prevent reminder from being sent more than once per day per user
         if (localStorage.getItem(reminderSentKey)) {
           return;
         }
 
-        // 1. Show toast notification
         let description;
         if (students.length === 1) {
           description = `It's ${students[0].name}'s birthday today!`;
@@ -45,7 +44,6 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
           description: description,
         });
 
-        // 2. Automatically draft email reminder
         try {
           const studentInfo = students.map(s => ({ name: s.name, department: s.department }));
           const emailContent: GenerateBirthdayEmailOutput = await generateBirthdayEmail({
@@ -56,16 +54,10 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
           const mailtoLink = `mailto:${user.email}?subject=${encodeURIComponent(emailContent.subject)}&body=${encodeURIComponent(emailContent.body)}`;
           window.location.href = mailtoLink;
           
-          // 3. Mark reminder as sent for today
           localStorage.setItem(reminderSentKey, 'true');
 
         } catch (error) {
           console.error("Failed to generate birthday email:", error);
-          toast({
-            variant: "destructive",
-            title: "Could not generate email",
-            description: "There was an error while trying to create the reminder email.",
-          });
         }
       }
     };
@@ -88,7 +80,7 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
       </CardHeader>
       <CardContent>
         <p className="text-muted-foreground mb-4">
-          Wishing a very happy birthday to the following students today!
+          Wishing a very happy birthday to the following students today! Click the message icon to wish them on WhatsApp.
         </p>
         <div className="space-y-4">
           {students.map((student) => (
@@ -97,10 +89,26 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
                 <AvatarImage src={student.photoUrl} alt={student.name} data-ai-hint={student.imageHint} />
                 <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
               </Avatar>
-              <div>
+              <div className="flex-1">
                 <p className="font-semibold">{student.name}</p>
                 <p className="text-sm text-muted-foreground">{student.department}</p>
               </div>
+              {student.phoneNumber && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    const message = encodeURIComponent(`Happy Birthday, ${student.name}! Wishing you all the best.`);
+                    const whatsappUrl = `https://wa.me/${student.phoneNumber.replace(/[^0-9]/g, '')}?text=${message}`;
+                    window.open(whatsappUrl, '_blank');
+                  }}
+                  className="rounded-full h-10 w-10 bg-green-500/10 hover:bg-green-500/20"
+                  aria-label={`Wish ${student.name} on WhatsApp`}
+                >
+                  <MessageCircle className="h-5 w-5 text-green-500" />
+                  <span className="sr-only">Wish on WhatsApp</span>
+                </Button>
+              )}
             </div>
           ))}
         </div>
