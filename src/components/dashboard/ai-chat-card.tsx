@@ -59,10 +59,10 @@ export default function AiChatCard({ studentsWithTodaysBirthday }: AiChatCardPro
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Wand2 className="text-primary" />
-                    AI Birthday Wish Assistant
+                    Agentverse
                 </CardTitle>
                 <CardDescription>
-                    Get creative ideas for birthday wishes.
+                    Get creative ideas for birthday wishes from Agentverse.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -79,10 +79,10 @@ export default function AiChatCard({ studentsWithTodaysBirthday }: AiChatCardPro
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Wand2 className="text-primary" />
-          AI Birthday Wish Assistant
+          Agentverse
         </CardTitle>
         <CardDescription>
-          Need inspiration? Select a student and let AI help you craft the perfect birthday message.
+          Need inspiration? Select a student and let Agentverse help you craft the perfect birthday message.
         </CardDescription>
       </CardHeader>
       <CardContent>
