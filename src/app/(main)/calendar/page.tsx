@@ -1,9 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
 import BirthdayCalendar from '@/components/calendar/birthday-calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useCollection, useFirestore } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { Student } from '@/lib/types';
 import { Loader } from 'lucide-react';
@@ -11,7 +10,7 @@ import { Loader } from 'lucide-react';
 
 export default function CalendarPage() {
     const firestore = useFirestore();
-    const studentsCollection = useMemo(() => collection(firestore, 'students'), [firestore]);
+    const studentsCollection = useMemoFirebase(() => collection(firestore, 'students'), [firestore]);
     const { data: students, isLoading } = useCollection<Student>(studentsCollection);
 
     return (

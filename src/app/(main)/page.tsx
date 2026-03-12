@@ -6,14 +6,14 @@ import TodaysBirthdayCard from '@/components/dashboard/todays-birthday-card';
 import StatCard from '@/components/dashboard/stat-card';
 import UpcomingBirthdaysCard from '@/components/dashboard/upcoming-birthdays-card';
 import { Users, Cake, CalendarClock, Loader } from 'lucide-react';
-import { useCollection, useFirestore } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { Student } from '@/lib/types';
 
 
 export default function DashboardPage() {
   const firestore = useFirestore();
-  const studentsCollection = useMemo(() => collection(firestore, 'students'), [firestore]);
+  const studentsCollection = useMemoFirebase(() => collection(firestore, 'students'), [firestore]);
   const { data: allStudents, isLoading } = useCollection<Student>(studentsCollection);
 
   const todaysBirthdays = useMemo(() => {
