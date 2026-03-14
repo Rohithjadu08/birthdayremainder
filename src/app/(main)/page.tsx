@@ -7,15 +7,18 @@ import AiChatCard from '@/components/dashboard/ai-chat-card';
 import StatCard from '@/components/dashboard/stat-card';
 import UpcomingBirthdaysCard from '@/components/dashboard/upcoming-birthdays-card';
 import { Users, Cake, CalendarClock, Loader } from 'lucide-react';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { Student } from '@/lib/types';
 
 
 export default function DashboardPage() {
   const firestore = useFirestore();
-  const studentsCollection = useMemoFirebase(() => collection(firestore, 'students'), [firestore]);
-  const { data: allStudents, isLoading } = useCollection<Student>(studentsCollection);
+  const { user, isUserLoading } = useUser();
+  const studentsCollection = useMemoFirebase(() => (user ? collection(firestore, 'users', user.uid, 'students') : null), [firestore, user]);
+  const { data: allStudents, isLoading: studentsLoading } = useCollection<Student>(studentsCollection);
+
+  const isLoading = isUserLoading || studentsLoading;
 
   const todaysBirthdays = useMemo(() => {
     if (!allStudents) return [];

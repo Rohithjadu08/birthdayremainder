@@ -29,7 +29,7 @@ import { studentSchema } from '@/lib/student-schema';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { z } from 'zod';
-import { useFirestore, useStorage } from '@/firebase';
+import { useFirestore, useStorage, useUser } from '@/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
@@ -53,12 +53,14 @@ export function StudentDialog({ isOpen, setIsOpen, student }: StudentSheetProps)
   const { toast } = useToast();
   const firestore = useFirestore();
   const storage = useStorage();
+  const { user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<z.infer<typeof studentSchema>>({
     resolver: zodResolver(studentSchema),
     defaultValues: {
         id: student?.id || undefined,
+        userId: student?.userId || user?.uid || undefined,
         name: student?.name || '',
         rollNumber: student?.rollNumber || '',
         department: student?.department || '',
@@ -72,6 +74,7 @@ export function StudentDialog({ isOpen, setIsOpen, student }: StudentSheetProps)
   useEffect(() => {
     form.reset({
         id: student?.id || undefined,
+        userId: student?.userId || user?.uid || undefined,
         name: student?.name || '',
         rollNumber: student?.rollNumber || '',
         department: student?.department || '',
@@ -80,11 +83,20 @@ export function StudentDialog({ isOpen, setIsOpen, student }: StudentSheetProps)
         photoUrl: student?.photoUrl || '',
         phoneNumber: student?.phoneNumber || '',
     })
-  }, [student, form, isOpen])
+  }, [student, form, isOpen, user])
 
 
   const onSubmit = async (values: z.infer<typeof studentSchema>) => {
     setIsSubmitting(true);
+    if (!user) {
+        toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: "You must be logged in to add or edit students.",
+        });
+        setIsSubmitting(false);
+        return;
+    }
     try {
         let submissionData = { ...values };
 
@@ -107,11 +119,11 @@ export function StudentDialog({ isOpen, setIsOpen, student }: StudentSheetProps)
         }
 
         if (student) {
-            await updateStudent(firestore, student.id, submissionData);
+            await updateStudent(firestore, user.uid, student.id, submissionData);
             toast({ title: "Success!", description: "Student updated successfully." });
         } else {
             const { id, ...newStudentData } = submissionData;
-            await createStudent(firestore, newStudentData as any);
+            await createStudent(firestore, user.uid, newStudentData as any);
             toast({ title: "Success!", description: "Student added successfully." });
         }
         setIsOpen(false);
@@ -144,6 +156,7 @@ export function StudentDialog({ isOpen, setIsOpen, student }: StudentSheetProps)
                 className="grid gap-4 py-4"
             >
              {student && <input type="hidden" {...form.register('id')} />}
+             <input type="hidden" {...form.register('userId')} />
              <FormField
                 control={form.control}
                 name="name"

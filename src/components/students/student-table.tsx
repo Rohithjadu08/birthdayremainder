@@ -30,7 +30,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { deleteStudent } from '@/lib/student-actions';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useUser } from '@/firebase';
 
 
 interface StudentTableProps {
@@ -39,6 +39,7 @@ interface StudentTableProps {
 
 export default function StudentTable({ students: initialStudents }: StudentTableProps) {
   const firestore = useFirestore();
+  const { user } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -76,9 +77,9 @@ export default function StudentTable({ students: initialStudents }: StudentTable
   };
 
   const handleDeleteAction = async () => {
-    if (!selectedStudent) return;
+    if (!selectedStudent || !user) return;
     setIsSubmitting(true);
-    await deleteStudent(firestore, selectedStudent.id);
+    await deleteStudent(firestore, user.uid, selectedStudent.id);
     setIsSubmitting(false);
     setIsAlertOpen(false);
   };
@@ -171,7 +172,7 @@ export default function StudentTable({ students: initialStudents }: StudentTable
             ) : (
               <TableRow>
                 <TableCell colSpan={7} className="text-center h-24">
-                  No students found.
+                  No students found. Add a student or import a list to get started.
                 </TableCell>
               </TableRow>
             )}

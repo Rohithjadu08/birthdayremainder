@@ -10,6 +10,10 @@
           "type": "string",
           "description": "Unique identifier for the Student entity."
         },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user (professor) this student belongs to."
+        },
         "name": {
           "type": "string",
           "description": "The full name of the student."
@@ -46,6 +50,7 @@
         }
       },
       "required": [
+        "userId",
         "name",
         "rollNumber",
         "department",
@@ -60,11 +65,11 @@
     ]
   },
   "firestore": {
-    "/students/{studentId}": {
+    "/users/{userId}/students/{studentId}": {
       "schema": {
         "$ref": "#/entities/Student"
       },
-      "description": "Collection to store all student documents."
+      "description": "Collection to store a user's student documents."
     }
   }
 }

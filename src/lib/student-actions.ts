@@ -16,33 +16,37 @@ import type { Student } from './types';
 
 export async function createStudent(
   firestore: Firestore,
-  studentData: Omit<Student, 'id' | 'imageHint'> & { photoUrl?: string }
+  userId: string,
+  studentData: Omit<Student, 'id' | 'userId' | 'imageHint'> & { photoUrl?: string }
 ): Promise<void> {
-  const studentsCollection = collection(firestore, 'students');
+  const studentsCollection = collection(firestore, 'users', userId, 'students');
   const finalPhotoUrl = studentData.photoUrl || placeholderImages[Math.floor(Math.random() * placeholderImages.length)].imageUrl;
   
   const newStudentData = {
     ...studentData,
+    userId: userId,
     photoUrl: finalPhotoUrl,
     imageHint: 'student portrait',
   };
 
-  await addDocumentNonBlocking(studentsCollection, newStudentData);
+  addDocumentNonBlocking(studentsCollection, newStudentData);
 }
 
 export async function updateStudent(
   firestore: Firestore,
+  userId: string,
   studentId: string,
-  studentData: Partial<Omit<Student, 'id'>>
+  studentData: Partial<Omit<Student, 'id' | 'userId'>>
 ): Promise<void> {
-  const studentDocRef = doc(firestore, 'students', studentId);
-  await setDocumentNonBlocking(studentDocRef, studentData, { merge: true });
+  const studentDocRef = doc(firestore, 'users', userId, 'students', studentId);
+  setDocumentNonBlocking(studentDocRef, studentData, { merge: true });
 }
 
 export async function deleteStudent(
   firestore: Firestore,
+  userId: string,
   studentId: string
 ): Promise<void> {
-  const studentDocRef = doc(firestore, 'students', studentId);
-  await deleteDocumentNonBlocking(studentDocRef);
+  const studentDocRef = doc(firestore, 'users', userId, 'students', studentId);
+  deleteDocumentNonBlocking(studentDocRef);
 }

@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useUser } from '@/firebase';
 import { createStudent } from '@/lib/student-actions';
 import { Loader2 } from 'lucide-react';
 import type { Student } from '@/lib/types';
@@ -27,6 +27,7 @@ interface StudentImportDialogProps {
 
 export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogProps) {
   const firestore = useFirestore();
+  const { user } = useUser();
   const { toast } = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -41,6 +42,16 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
       let successCount = 0;
       let errorCount = 0;
 
+      if (!user) {
+          toast({
+              variant: 'destructive',
+              title: 'Authentication Error',
+              description: 'You must be logged in to import students.',
+          });
+          setIsImporting(false);
+          return;
+      }
+
       for (const studentData of studentsToImport) {
         // Add empty photoUrl for validation
         const validationData = { ...studentData, photoUrl: '' };
@@ -48,7 +59,7 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
 
         if (validation.success) {
           try {
-            const dataToCreate: Omit<Student, 'id' | 'imageHint' | 'photoUrl'> & { photoUrl?: string, phoneNumber?: string } = {
+            const dataToCreate: Omit<Student, 'id' | 'userId' | 'imageHint' | 'photoUrl'> & { photoUrl?: string, phoneNumber?: string } = {
                 name: validation.data.name,
                 rollNumber: validation.data.rollNumber,
                 department: validation.data.department,
@@ -56,7 +67,7 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
                 birthday: validation.data.birthday,
                 phoneNumber: validation.data.phoneNumber,
             };
-            await createStudent(firestore, dataToCreate);
+            await createStudent(firestore, user.uid, dataToCreate);
             successCount++;
           } catch (error) {
             errorCount++;
