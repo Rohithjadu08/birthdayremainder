@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Cake, LayoutDashboard, Users, CalendarDays } from 'lucide-react';
+import { Cake, LayoutDashboard, Users, CalendarDays, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/students', label: 'Students', icon: Users },
   { href: '/calendar', label: 'Calendar', icon: CalendarDays },
+  { href: '/about', label: 'About', icon: Info },
 ];
 
 export default function AppSidebar() {
@@ -40,19 +41,6 @@ export default function AppSidebar() {
           ))}
         </ul>
       </nav>
-      <div className="mt-auto border-t p-4">
-        <div className="text-xs text-muted-foreground">
-          <p className="font-semibold text-card-foreground">Built by Rohith P</p>
-          <p>B.Tech - Artificial Intelligence and Machine Learning</p>
-          <p>Sona College of Technology</p>
-          <p className="mt-2 font-semibold text-card-foreground">Co-founders:</p>
-          <ul className="list-disc list-inside pl-4">
-            <li>Rahul Kumar Yadav</li>
-            <li>Sujan Khatri</li>
-            <li>Samagya Baral</li>
-          </ul>
-        </div>
-      </div>
     </aside>
   );
 }

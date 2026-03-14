@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Menu, Cake, LayoutDashboard, Users, CalendarDays, LogOut } from 'lucide-react';
+import { Menu, Cake, LayoutDashboard, Users, CalendarDays, LogOut, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/firebase';
 import { signOut, type User } from 'firebase/auth';
@@ -28,12 +28,14 @@ const navItems = [
     { href: '/', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/students', label: 'Students', icon: Users },
     { href: '/calendar', label: 'Calendar', icon: CalendarDays },
+    { href: '/about', label: 'About', icon: Info },
 ];
 
 const pageTitles: { [key: string]: string } = {
     '/': 'Dashboard',
     '/students': 'Student Directory',
     '/calendar': 'Birthday Calendar',
+    '/about': 'About',
 };
 
 interface AppHeaderProps {
