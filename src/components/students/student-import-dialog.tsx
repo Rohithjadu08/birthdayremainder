@@ -61,12 +61,12 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
           section: studentData.section?.trim() || '',
           birthday: studentData.birthday?.trim() || '',
           photoUrl: '', // For validation purposes
-          ...(studentData.phoneNumber && { phoneNumber: studentData.phoneNumber.trim() }),
+          phoneNumber: studentData.phoneNumber?.trim() || undefined,
         };
 
         const validation = studentSchema.safeParse(cleanedData);
 
-        if (validation.success) {
+        if (validation.success && validation.data.name && validation.data.rollNumber) {
           try {
             // Use the validated data which is guaranteed to be in the correct format
             const dataToCreate: Omit<Student, 'id' | 'userId' | 'imageHint' | 'photoUrl'> & { photoUrl?: string, phoneNumber?: string } = {
@@ -83,7 +83,11 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
             errorCount++;
           }
         } else {
-            errorCount++;
+            if (validation.success && (!validation.data.name || !validation.data.rollNumber)) {
+              // This is an empty but structurally valid row, just skip it.
+            } else {
+              errorCount++;
+            }
         }
       }
       
@@ -155,20 +159,15 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
         const rows = lines.slice(1);
         const studentsToImport = rows.map(row => {
             const data = row.split(',');
-            const name = data[nameIndex]?.trim();
-            const rollNumber = data[rollNumberIndex]?.trim();
-
-            if (!name || !rollNumber) return null;
-
             return {
-              name,
-              rollNumber,
+              name: data[nameIndex]?.trim(),
+              rollNumber: data[rollNumberIndex]?.trim(),
               department: data[departmentIndex]?.trim(),
               section: data[sectionIndex]?.trim(),
               birthday: data[birthdayIndex]?.trim(),
               phoneNumber: phoneNumberIndex !== -1 ? data[phoneNumberIndex]?.trim() : undefined,
             };
-        }).filter(Boolean); // Filter out any null rows
+        }).filter(s => s.name && s.rollNumber);
 
         await processImportedStudents(studentsToImport);
         
@@ -179,12 +178,12 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
     reader.readAsText(file);
   }
 
-  const handlePdfImport = (file: File) => {
+  const handleAiImport = (file: File) => {
     const reader = new FileReader();
     reader.onload = async (e) => {
         const dataUri = e.target?.result;
         if (typeof dataUri !== 'string') {
-            toast({ variant: 'destructive', title: 'Could not read PDF file.' });
+            toast({ variant: 'destructive', title: 'Could not read the selected file.' });
             setIsImporting(false);
             return;
         }
@@ -196,8 +195,8 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
         } catch (error) {
             toast({
                 variant: 'destructive',
-                title: 'PDF Processing Failed',
-                description: 'Could not extract student data from the PDF. Please ensure it is a text-based PDF with a clear table structure.',
+                title: 'AI Processing Failed',
+                description: 'Could not extract student data from the file. Please ensure it is a text-based document with a clear structure.',
             });
         } finally {
             setIsImporting(false);
@@ -213,23 +212,17 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
       toast({
         variant: 'destructive',
         title: 'No file selected',
-        description: 'Please select a CSV or PDF file to import.',
+        description: 'Please select a file to import.',
       });
       return;
     }
     setIsImporting(true);
 
-    if (file.type === 'application/pdf') {
-        handlePdfImport(file);
-    } else if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+    if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
         handleCsvImport(file);
     } else {
-        toast({
-            variant: 'destructive',
-            title: 'Unsupported File Type',
-            description: 'Please upload a CSV or a PDF file.',
-        });
-        setIsImporting(false);
+        // For PDF and other formats, use the AI-powered extractor
+        handleAiImport(file);
     }
   };
 
@@ -244,16 +237,15 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
         <DialogHeader>
           <DialogTitle>Import Students</DialogTitle>
           <DialogDescription>
-            Select a CSV or PDF file to bulk-import students. For CSV, the file must have a header row with columns: name, rollNumber, department, section, birthday, and optionally phoneNumber.
+            Select a file to bulk-import students. CSV files must have a header row with columns: name, rollNumber, department, section, birthday, and optionally phoneNumber. Other file formats like PDF or text files will be processed by AI.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid w-full max-w-sm items-center gap-1.5">
-            <Label htmlFor="file-upload">CSV or PDF File</Label>
+            <Label htmlFor="file-upload">Upload File</Label>
             <Input
               id="file-upload"
               type="file"
-              accept=".csv,.pdf"
               onChange={handleFileChange}
             />
           </div>
