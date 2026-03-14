@@ -40,6 +40,19 @@ export default function AppSidebar() {
           ))}
         </ul>
       </nav>
+      <div className="mt-auto border-t p-4">
+        <div className="text-xs text-muted-foreground">
+          <p className="font-semibold text-card-foreground">Built by Rohith P</p>
+          <p>B.Tech - Artificial Intelligence and Machine Learning</p>
+          <p>Sona College of Technology</p>
+          <p className="mt-2 font-semibold text-card-foreground">Co-founders:</p>
+          <ul className="list-disc list-inside pl-4">
+            <li>Rahul Kumar Yadav</li>
+            <li>Sujan Khatri</li>
+            <li>Samagya Baral</li>
+          </ul>
+        </div>
+      </div>
     </aside>
   );
 }
