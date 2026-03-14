@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { deleteStudent } from '@/lib/student-actions';
 import { useFirestore, useUser } from '@/firebase';
+import { capitalizeName } from '@/lib/utils';
 
 
 interface StudentTableProps {
@@ -54,7 +55,7 @@ export default function StudentTable({ students: initialStudents }: StudentTable
   const filteredStudents = useMemo(() => {
     return initialStudents.filter(student => {
       const searchMatch =
-        student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        capitalizeName(student.name).toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.rollNumber.toLowerCase().includes(searchTerm.toLowerCase());
       const departmentMatch = departmentFilter === 'all' || student.department === departmentFilter;
       return searchMatch && departmentMatch;
@@ -122,7 +123,7 @@ export default function StudentTable({ students: initialStudents }: StudentTable
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead className="hidden md:table-cell">Roll Number</TableHead>
+              <TableHead className="hidden md:table-cell whitespace-nowrap">Roll Number</TableHead>
               <TableHead>Department</TableHead>
               <TableHead>Section</TableHead>
               <TableHead className="hidden lg:table-cell">Phone</TableHead>
@@ -138,9 +139,9 @@ export default function StudentTable({ students: initialStudents }: StudentTable
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
                          <AvatarImage src={student.photoUrl} alt={student.name} data-ai-hint={student.imageHint} />
-                         <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+                         <AvatarFallback>{capitalizeName(student.name).charAt(0)}</AvatarFallback>
                       </Avatar>
-                      <span className="font-medium">{student.name}</span>
+                      <span className="font-medium">{capitalizeName(student.name)}</span>
                     </div>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">{student.rollNumber}</TableCell>
@@ -191,7 +192,7 @@ export default function StudentTable({ students: initialStudents }: StudentTable
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the student record for <span className="font-semibold">{selectedStudent?.name}</span>.
+              This action cannot be undone. This will permanently delete the student record for <span className="font-semibold">{selectedStudent ? capitalizeName(selectedStudent.name) : ''}</span>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

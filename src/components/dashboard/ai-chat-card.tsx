@@ -8,6 +8,7 @@ import { Loader2, Wand2, Sparkles } from 'lucide-react';
 import type { Student } from '@/lib/types';
 import { generateBirthdayWish } from '@/ai/flows/generate-birthday-wish-flow';
 import { useToast } from '@/hooks/use-toast';
+import { capitalizeName } from '@/lib/utils';
 
 interface AiChatCardProps {
   students: Student[];
@@ -95,7 +96,7 @@ export default function AiChatCard({ students }: AiChatCardProps) {
             <SelectContent>
               {students.map(student => (
                 <SelectItem key={student.id} value={student.id}>
-                  {student.name}
+                  {capitalizeName(student.name)}
                 </SelectItem>
               ))}
             </SelectContent>

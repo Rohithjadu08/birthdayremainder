@@ -5,13 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PartyPopper, MessageCircle, Mail } from 'lucide-react';
 import Confetti from '@/components/shared/confetti';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase';
 import { generateBirthdayEmail } from '@/ai/flows/generate-birthday-email-flow';
 import type { GenerateBirthdayEmailOutput } from '@/ai/flows/generate-birthday-email-flow';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
+import { capitalizeName } from '@/lib/utils';
+
 
 interface TodaysBirthdayCardProps {
   students: Student[];
@@ -22,8 +24,7 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
   const { user } = useUser();
   const [notificationSent, setNotificationSent] = useState(false);
 
-  // This function is for the manual button click
-  const handleSendReminderEmail = async () => {
+  const handleSendReminderEmail = useCallback(async () => {
     if (!user || students.length === 0) return;
 
     try {
@@ -35,7 +36,6 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
       
       const mailtoLink = `mailto:${user.email}?subject=${encodeURIComponent(emailContent.subject)}&body=${encodeURIComponent(emailContent.body)}`;
       
-      // Safe to call as it's a user interaction
       window.open(mailtoLink, '_blank');
       
       toast({
@@ -50,28 +50,25 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
           description: 'Could not generate the reminder email.',
       });
     }
-  };
+  }, [user, students, toast]);
   
   useEffect(() => {
-    // This effect runs only on the client, and we prevent it from re-running unnecessarily.
-    // The `notificationSent` state ensures the logic runs only once per component lifecycle after conditions are met.
-    if (notificationSent || students.length === 0 || !user) {
+    if (typeof window === 'undefined' || notificationSent || students.length === 0 || !user) {
       return;
     }
 
     const todayStr = format(new Date(), 'yyyy-MM-dd');
-    const notificationKey = `birthdayNotification_${todayStr}`;
+    const notificationKey = `birthdayNotification_${user.uid}_${todayStr}`;
 
-    // sessionStorage check prevents it from running more than once per day in the same browser session.
     if (!sessionStorage.getItem(notificationKey)) {
-        // Show toast notification
         let description;
+        const capitalizedNames = students.map(s => capitalizeName(s.name));
+
         if (students.length === 1) {
-          description = `It's ${students[0].name}'s birthday today! Don't forget to wish them.`;
+          description = `It's ${capitalizedNames[0]}'s birthday today! Don't forget to wish them.`;
         } else {
-          const names = students.map(s => s.name);
-          const lastName = names.pop();
-          description = `It's ${names.join(', ')} and ${lastName}'s birthday today! Don't forget to wish them.`;
+          const lastName = capitalizedNames.pop();
+          description = `It's ${capitalizedNames.join(', ')} and ${lastName}'s birthday today! Don't forget to wish them.`;
         }
         
         toast({
@@ -80,30 +77,14 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
           duration: 9000,
         });
 
-        // Automatically draft the reminder email
-        const autoSendEmail = async () => {
-            try {
-                const studentInfo = students.map(s => ({ name: s.name, department: s.department }));
-                const emailContent: GenerateBirthdayEmailOutput = await generateBirthdayEmail({
-                    students: studentInfo,
-                    professorName: user.displayName || 'Professor',
-                });
-                const mailtoLink = `mailto:${user.email}?subject=${encodeURIComponent(emailContent.subject)}&body=${encodeURIComponent(emailContent.body)}`;
-                window.open(mailtoLink, '_blank');
-            } catch (error) {
-                console.error("Failed to generate auto-reminder email:", error);
-            }
-        };
-
-        autoSendEmail();
+        handleSendReminderEmail();
         
         sessionStorage.setItem(notificationKey, 'true');
     }
 
-    // Mark as sent to prevent re-triggering this effect on subsequent re-renders.
     setNotificationSent(true);
 
-  }, [students, user, toast, notificationSent]);
+  }, [students, user, toast, notificationSent, handleSendReminderEmail]);
 
 
   if (students.length === 0) {
@@ -133,10 +114,10 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
             <div key={student.id} className="flex items-center gap-4 p-4 rounded-lg bg-accent/10">
               <Avatar className="h-12 w-12">
                 <AvatarImage src={student.photoUrl} alt={student.name} data-ai-hint={student.imageHint} />
-                <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+                <AvatarFallback>{capitalizeName(student.name).charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="flex-1">
-                <p className="font-semibold">{student.name}</p>
+                <p className="font-semibold">{capitalizeName(student.name)}</p>
                 <p className="text-sm text-muted-foreground">{student.department}, Section {student.section}</p>
               </div>
               {student.phoneNumber && (

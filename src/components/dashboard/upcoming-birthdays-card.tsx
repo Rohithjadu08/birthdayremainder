@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CalendarClock } from 'lucide-react';
 import { format } from 'date-fns';
+import { capitalizeName } from '@/lib/utils';
 
 interface UpcomingBirthdaysCardProps {
   students: Student[];
@@ -24,10 +25,10 @@ export default function UpcomingBirthdaysCard({ students }: UpcomingBirthdaysCar
               <div key={student.id} className="flex items-center gap-4">
                 <Avatar className="h-10 w-10">
                    <AvatarImage src={student.photoUrl} alt={student.name} data-ai-hint={student.imageHint} />
-                   <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+                   <AvatarFallback>{capitalizeName(student.name).charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                  <p className="font-semibold">{student.name}</p>
+                  <p className="font-semibold">{capitalizeName(student.name)}</p>
                   <p className="text-sm text-muted-foreground">{student.department}, Section {student.section}</p>
                 </div>
                 <div className="text-right">

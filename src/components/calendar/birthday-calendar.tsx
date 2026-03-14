@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Cake } from 'lucide-react';
 import { format } from 'date-fns';
 import type { DayContentProps } from 'react-day-picker';
+import { capitalizeName } from '@/lib/utils';
 
 interface BirthdayCalendarProps {
   students: Student[];
@@ -71,10 +72,10 @@ export default function BirthdayCalendar({ students }: BirthdayCalendarProps) {
                     <div key={student.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted">
                         <Avatar className="h-9 w-9">
                             <AvatarImage src={student.photoUrl} alt={student.name} data-ai-hint={student.imageHint} />
-                            <AvatarFallback>{student.name[0]}</AvatarFallback>
+                            <AvatarFallback>{capitalizeName(student.name).charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div>
-                            <p className="text-sm font-medium leading-none">{student.name}</p>
+                            <p className="text-sm font-medium leading-none">{capitalizeName(student.name)}</p>
                             <p className="text-xs text-muted-foreground">{student.department}{student.section ? `, Section ${student.section}`: ''}</p>
                         </div>
                     </div>
