@@ -43,8 +43,9 @@ export default function BirthdayCalendar({ students }: BirthdayCalendarProps) {
   const CustomDayContent = (props: DayContentProps) => {
     const { date, displayMonth } = props;
     
+    // Do not render for days outside the current month, but keep the container
     if (date.getMonth() !== displayMonth.getMonth()) {
-        return <></>;
+        return <div className="flex h-full w-full items-center justify-center">{format(date, 'd')}</div>;
     }
 
     const key = format(date, 'yyyy-MM-dd');
@@ -53,11 +54,11 @@ export default function BirthdayCalendar({ students }: BirthdayCalendarProps) {
     if (studentsOnDay) {
       return (
         <Popover>
-          <PopoverTrigger asChild>
-            <span className="relative flex h-full w-full items-center justify-center">
+          <PopoverTrigger asChild onPointerDown={(e) => e.preventDefault()}>
+            <div className="relative flex h-full w-full items-center justify-center">
               {format(date, 'd')}
               <Cake className="absolute bottom-0.5 right-0.5 h-3 w-3" />
-            </span>
+            </div>
           </PopoverTrigger>
           <PopoverContent className="w-80 z-50">
             <div className="space-y-4">
@@ -84,7 +85,7 @@ export default function BirthdayCalendar({ students }: BirthdayCalendarProps) {
         </Popover>
       );
     }
-    return <>{format(date, 'd')}</>;
+    return <div className="flex h-full w-full items-center justify-center">{format(date, 'd')}</div>;
   };
 
   return (
