@@ -12,7 +12,6 @@ import { generateBirthdayEmail } from '@/ai/flows/generate-birthday-email-flow';
 import type { GenerateBirthdayEmailOutput } from '@/ai/flows/generate-birthday-email-flow';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { ToastAction } from '@/components/ui/toast';
 
 interface TodaysBirthdayCardProps {
   students: Student[];
@@ -51,6 +50,26 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
   }, [students, user, toast]);
   
   useEffect(() => {
+    const autoSendReminder = async () => {
+      if (students.length > 0 && user) {
+        try {
+            const studentInfo = students.map(s => ({ name: s.name, department: s.department }));
+            const emailContent: GenerateBirthdayEmailOutput = await generateBirthdayEmail({
+              students: studentInfo,
+              professorName: user.displayName || 'Professor',
+            });
+            
+            const mailtoLink = `mailto:${user.email}?subject=${encodeURIComponent(emailContent.subject)}&body=${encodeURIComponent(emailContent.body)}`;
+            window.open(mailtoLink, '_blank');
+            
+          } catch (error) {
+            console.error("Failed to generate birthday email:", error);
+            // We show a toast for the birthday, but maybe a separate one for the email failure.
+            // For now, let's just log it to avoid too many popups.
+          }
+      }
+    };
+
     // This logic ensures the notification shows only once per day per browser session.
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     const notificationKey = `birthdayNotification_${todayStr}`;
@@ -69,17 +88,12 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
           title: "🎉 Happy Birthday!",
           description: description,
           duration: 9000,
-          action: (
-            <ToastAction 
-                altText="Send Reminder"
-                onClick={handleSendReminderEmail}>
-                Send Reminder
-            </ToastAction>
-          ),
         });
+
+        autoSendReminder();
         sessionStorage.setItem(notificationKey, 'true');
     }
-  }, [students, user, toast, handleSendReminderEmail]);
+  }, [students, user, toast]);
 
 
   if (students.length === 0) {
