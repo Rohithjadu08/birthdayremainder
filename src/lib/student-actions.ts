@@ -14,11 +14,11 @@ import { placeholderImages } from './placeholder-images.json';
 import type { Student } from './types';
 
 
-export async function createStudent(
+export function createStudent(
   firestore: Firestore,
   userId: string,
   studentData: Omit<Student, 'id' | 'userId' | 'imageHint'> & { photoUrl?: string }
-): Promise<void> {
+): Promise<any> {
   const studentsCollection = collection(firestore, 'users', userId, 'students');
   const finalPhotoUrl = studentData.photoUrl || placeholderImages[Math.floor(Math.random() * placeholderImages.length)].imageUrl;
   
@@ -29,7 +29,7 @@ export async function createStudent(
     imageHint: 'student portrait',
   };
 
-  addDocumentNonBlocking(studentsCollection, newStudentData);
+  return addDocumentNonBlocking(studentsCollection, newStudentData);
 }
 
 export async function updateStudent(

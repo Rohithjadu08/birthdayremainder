@@ -66,46 +66,53 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
       .filter((res): res is z.SafeParseSuccess<z.infer<typeof studentSchema>> => res.success)
       .map(res => res.data);
     
-    const errorCount = studentsToImport.length - validStudents.length;
+    const validationErrorCount = studentsToImport.length - validStudents.length;
     let successCount = 0;
+    let writeErrorCount = 0;
 
-    if (validStudents.length === 0) {
-        toast({
-          variant: "destructive",
-          title: 'Import Failed',
-          description: 'No valid student records were found in the file. Please check the file format and data.',
-        });
-    } else {
+    if (validStudents.length > 0) {
         for (const studentData of validStudents) {
             try {
-              // The createStudent function is non-blocking, but we can await it here if needed,
-              // or handle it as a fire-and-forget for faster UI response.
-              // For simplicity in counting, we'll assume it succeeds if it doesn't throw.
-              await createStudent(firestore, user.uid, studentData);
-              successCount++;
+                // createStudent now returns a promise that resolves with the doc ref on success, or void on handled failure
+                const result = await createStudent(firestore, user.uid, studentData);
+                if (result) {
+                    successCount++;
+                } else {
+                    // This indicates a non-throwing failure, like a permissions error caught in the action.
+                    writeErrorCount++;
+                }
             } catch (error) {
-              // This would be a DB write error, already handled by the action.
-              // We decrement errorCount since it's a write fail, not validation fail.
+                // This would catch unexpected errors in the createStudent function itself.
+                console.error("Error saving student during import:", error);
+                writeErrorCount++;
             }
         }
-
-        if (successCount > 0 && errorCount > 0) {
-          toast({
-            title: 'Import Partially Successful',
-            description: `${successCount} students imported. ${errorCount} rows had invalid data and were skipped.`,
-          });
-        } else if (successCount > 0) {
-          toast({
-            title: 'Import Complete',
-            description: `${successCount} students imported successfully.`,
-          });
-        } else { // All valid students failed to write to DB
-           toast({
+    }
+    
+    if (successCount > 0) {
+        let description = `${successCount} students imported successfully.`;
+        const failedCount = validationErrorCount + writeErrorCount;
+        if (failedCount > 0) {
+            description = `${successCount} students imported. ${failedCount} rows failed due to invalid data or save errors.`;
+        }
+        toast({
+            title: successCount === studentsToImport.length ? 'Import Complete' : 'Import Partially Successful',
+            description,
+        });
+    } else {
+        let description = 'Could not import any students.';
+        if (studentsToImport.length === 0) {
+            description = 'The selected file appears to be empty or could not be read.';
+        } else if (validationErrorCount > 0 && validationErrorCount === studentsToImport.length) {
+            description = `All ${studentsToImport.length} rows in the file contained invalid data. Please check the file format.`;
+        } else if (writeErrorCount > 0) {
+            description = `Found ${validStudents.length} valid records, but all failed to save to the database. Please try again.`;
+        }
+        toast({
             variant: "destructive",
             title: 'Import Failed',
-            description: 'Could not save student data. Please try again.',
-          });
-        }
+            description,
+        });
     }
 
     setIsImporting(false);
@@ -162,7 +169,7 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
               birthday: data[birthdayIndex]?.trim(),
               phoneNumber: phoneNumberIndex !== -1 ? data[phoneNumberIndex]?.trim() : undefined,
             };
-        });
+        }).filter(s => s.name || s.rollNumber); // Filter out completely empty rows
 
         await processImportedStudents(studentsToImport);
     };
