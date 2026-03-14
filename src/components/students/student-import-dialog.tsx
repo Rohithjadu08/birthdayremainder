@@ -53,12 +53,22 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
       }
 
       for (const studentData of studentsToImport) {
-        // Add empty photoUrl for validation since it's not in the import file
-        const validationData = { ...studentData, photoUrl: '' };
-        const validation = studentSchema.safeParse(validationData);
+        // Sanitize data before validation
+        const cleanedData = {
+          name: studentData.name?.trim() || '',
+          rollNumber: studentData.rollNumber?.trim() || '',
+          department: studentData.department?.trim() || '',
+          section: studentData.section?.trim() || '',
+          birthday: studentData.birthday?.trim() || '',
+          photoUrl: '', // For validation purposes
+          ...(studentData.phoneNumber && { phoneNumber: studentData.phoneNumber.trim() }),
+        };
+
+        const validation = studentSchema.safeParse(cleanedData);
 
         if (validation.success) {
           try {
+            // Use the validated data which is guaranteed to be in the correct format
             const dataToCreate: Omit<Student, 'id' | 'userId' | 'imageHint' | 'photoUrl'> & { photoUrl?: string, phoneNumber?: string } = {
                 name: validation.data.name,
                 rollNumber: validation.data.rollNumber,
@@ -145,15 +155,20 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
         const rows = lines.slice(1);
         const studentsToImport = rows.map(row => {
             const data = row.split(',');
+            const name = data[nameIndex]?.trim();
+            const rollNumber = data[rollNumberIndex]?.trim();
+
+            if (!name || !rollNumber) return null;
+
             return {
-              name: data[nameIndex]?.trim(),
-              rollNumber: data[rollNumberIndex]?.trim(),
+              name,
+              rollNumber,
               department: data[departmentIndex]?.trim(),
               section: data[sectionIndex]?.trim(),
               birthday: data[birthdayIndex]?.trim(),
               phoneNumber: phoneNumberIndex !== -1 ? data[phoneNumberIndex]?.trim() : undefined,
             };
-        }).filter(student => student && student.name && student.rollNumber);
+        }).filter(Boolean); // Filter out any null rows
 
         await processImportedStudents(studentsToImport);
         
