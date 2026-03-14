@@ -75,7 +75,7 @@ export default function BirthdayCalendar({ students }: BirthdayCalendarProps) {
                         </Avatar>
                         <div>
                             <p className="text-sm font-medium leading-none">{student.name}</p>
-                            <p className="text-xs text-muted-foreground">{student.department}, Section {student.section}</p>
+                            <p className="text-xs text-muted-foreground">{student.department}{student.section ? `, Section ${student.section}`: ''}</p>
                         </div>
                     </div>
                 ))}
@@ -90,11 +90,10 @@ export default function BirthdayCalendar({ students }: BirthdayCalendarProps) {
 
   return (
     <Calendar
-      mode="single"
       className="rounded-md border"
       modifiers={{ birthdays: birthdayDates }}
       modifiersClassNames={{
-        birthdays: 'bg-primary text-primary-foreground rounded-md hover:bg-primary/90 focus:bg-primary focus:text-primary-foreground',
+        birthdays: 'bg-primary/90 text-primary-foreground rounded-md hover:bg-primary/80 focus:bg-primary focus:text-primary-foreground',
       }}
       components={{
         DayContent: CustomDayContent,
