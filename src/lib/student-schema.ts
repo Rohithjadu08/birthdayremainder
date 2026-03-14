@@ -7,7 +7,7 @@ export const studentSchema = z.object({
     department: z.string().min(2, { message: 'Department is required.' }),
     section: z.string().min(1, { message: 'Section is required.' }),
     birthday: z.string().refine((val) => !isNaN(Date.parse(val)), { message: 'Invalid date format.' }),
-    photoUrl: z.string().url({ message: 'Please enter a valid URL.' }).or(z.literal('')),
+    photoUrl: z.any().optional(),
     phoneNumber: z.string().optional(),
 });
 

@@ -28,7 +28,9 @@ import { studentSchema } from '@/lib/student-schema';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { z } from 'zod';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useStorage } from '@/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 interface StudentSheetProps {
   isOpen: boolean;
@@ -49,6 +51,7 @@ const departments = [
 export function StudentDialog({ isOpen, setIsOpen, student }: StudentSheetProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
+  const storage = useStorage();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<z.infer<typeof studentSchema>>({
@@ -82,12 +85,32 @@ export function StudentDialog({ isOpen, setIsOpen, student }: StudentSheetProps)
   const onSubmit = async (values: z.infer<typeof studentSchema>) => {
     setIsSubmitting(true);
     try {
+        let submissionData = { ...values };
+
+        const photoValue = values.photoUrl;
+        
+        // If a new file is uploaded, get its URL
+        if (photoValue && typeof photoValue === 'object' && photoValue.length > 0) {
+            const file = photoValue[0] as File;
+            toast({ description: "Uploading photo..." });
+            const imagePath = `student-photos/${values.rollNumber || Date.now()}-${file.name}`;
+            const storageRef = ref(storage, imagePath);
+            await uploadBytes(storageRef, file);
+            submissionData.photoUrl = await getDownloadURL(storageRef);
+        } else if (student) {
+            // If editing and no new file is chosen, keep the existing photo URL
+            submissionData.photoUrl = student.photoUrl;
+        } else {
+            // If creating and no file, set to empty so a placeholder can be used
+            submissionData.photoUrl = '';
+        }
+
         if (student) {
-            await updateStudent(firestore, student.id, values);
+            await updateStudent(firestore, student.id, submissionData);
             toast({ title: "Success!", description: "Student updated successfully." });
         } else {
-            const { id, ...newStudentData } = values;
-            await createStudent(firestore, newStudentData);
+            const { id, ...newStudentData } = submissionData;
+            await createStudent(firestore, newStudentData as any);
             toast({ title: "Success!", description: "Student added successfully." });
         }
         setIsOpen(false);
@@ -95,7 +118,7 @@ export function StudentDialog({ isOpen, setIsOpen, student }: StudentSheetProps)
         console.error("Form submission error:", error);
         toast({
             title: "Uh oh! Something went wrong.",
-            description: "An unexpected error occurred.",
+            description: "An unexpected error occurred during submission.",
             variant: "destructive",
         });
     } finally {
@@ -208,13 +231,31 @@ export function StudentDialog({ isOpen, setIsOpen, student }: StudentSheetProps)
             <FormField
                 control={form.control}
                 name="photoUrl"
-                render={({ field }) => (
+                render={({ field: { onChange, ...restField } }) => (
                     <FormItem>
-                    <FormLabel>Photo URL (Optional)</FormLabel>
-                    <FormControl>
-                        <Input placeholder="https://example.com/photo.jpg" {...field} />
-                    </FormControl>
-                    <FormMessage />
+                        <FormLabel>Photo</FormLabel>
+                        {student?.photoUrl && (
+                            <div className="flex items-center gap-4">
+                                <Avatar className="h-16 w-16">
+                                    <AvatarImage src={student.photoUrl} alt={student.name} />
+                                    <AvatarFallback>{student.name?.[0]}</AvatarFallback>
+                                </Avatar>
+                                <p className="text-sm text-muted-foreground">Current photo.</p>
+                            </div>
+                        )}
+                        <FormControl>
+                            <Input 
+                                type="file" 
+                                accept="image/*,.pdf"
+                                onChange={(e) => onChange(e.target.files)}
+                                {...restField}
+                                className="pt-2"
+                             />
+                        </FormControl>
+                        <FormDescription>
+                            Upload a photo (image or PDF). Leave blank to keep the current photo.
+                        </FormDescription>
+                        <FormMessage />
                     </FormItem>
                 )}
             />
