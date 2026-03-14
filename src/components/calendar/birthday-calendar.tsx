@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Cake } from 'lucide-react';
 import { format } from 'date-fns';
+import type { DayContentProps } from 'react-day-picker';
 
 interface BirthdayCalendarProps {
   students: Student[];
@@ -16,10 +17,12 @@ export default function BirthdayCalendar({ students }: BirthdayCalendarProps) {
   const birthdaysByDate = useMemo(() => {
     const map = new Map<string, Student[]>();
     students.forEach(student => {
-      const date = new Date(student.birthday);
-      // Normalize to current year for display consistency
+      // Robustly parse 'YYYY-MM-DD' to avoid timezone issues.
+      const [year, month, day] = student.birthday.split('-').map(Number);
       const currentYear = new Date().getFullYear();
-      const displayDate = new Date(currentYear, date.getMonth(), date.getDate());
+      // Create date in local timezone. Month is 0-indexed.
+      const displayDate = new Date(currentYear, month - 1, day);
+      
       const key = format(displayDate, 'yyyy-MM-dd');
       
       if (!map.has(key)) {
@@ -30,33 +33,48 @@ export default function BirthdayCalendar({ students }: BirthdayCalendarProps) {
     return map;
   }, [students]);
 
-  const birthdayDates = Array.from(birthdaysByDate.keys()).map(key => new Date(key));
+  const birthdayDates = useMemo(() => {
+    return Array.from(birthdaysByDate.keys()).map(key => {
+        const [year, month, day] = key.split('-').map(Number);
+        return new Date(year, month - 1, day);
+    });
+  }, [birthdaysByDate]);
 
-  const DayContent = (day: Date) => {
-    const key = format(day, 'yyyy-MM-dd');
+  const CustomDayContent = (props: DayContentProps) => {
+    const { date, displayMonth } = props;
+    
+    // Don't render for days outside the current month if they are shown
+    if (date.getMonth() !== displayMonth.getMonth()) {
+        return <div />;
+    }
+
+    const key = format(date, 'yyyy-MM-dd');
     const studentsOnDay = birthdaysByDate.get(key);
 
     if (studentsOnDay) {
       return (
         <Popover>
           <PopoverTrigger asChild>
-            <div className="relative w-full h-full flex items-center justify-center">
-              {format(day, 'd')}
-              <Cake className="absolute bottom-0 right-0 h-3 w-3 text-accent" />
+            <div className="relative w-full h-full flex items-center justify-center cursor-pointer">
+              {format(date, 'd')}
+              <Cake className="absolute bottom-0.5 right-0.5 h-3 w-3" />
             </div>
           </PopoverTrigger>
-          <PopoverContent>
-            <div className="space-y-2">
-                <h4 className="font-medium leading-none">Birthdays on {format(day, 'MMMM d')}</h4>
-                <div className="space-y-2">
+          <PopoverContent className="w-80 z-50">
+            <div className="space-y-4">
+                <div className="text-center">
+                    <h4 className="font-semibold leading-none">Birthdays</h4>
+                    <p className="text-sm text-muted-foreground">{format(date, 'MMMM d')}</p>
+                </div>
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
                 {studentsOnDay.map(student => (
-                    <div key={student.id} className="flex items-center gap-2">
-                        <Avatar className="h-8 w-8">
+                    <div key={student.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted">
+                        <Avatar className="h-9 w-9">
                             <AvatarImage src={student.photoUrl} alt={student.name} data-ai-hint={student.imageHint} />
                             <AvatarFallback>{student.name[0]}</AvatarFallback>
                         </Avatar>
                         <div>
-                            <p className="text-sm font-medium">{student.name}</p>
+                            <p className="text-sm font-medium leading-none">{student.name}</p>
                             <p className="text-xs text-muted-foreground">{student.department}, Section {student.section}</p>
                         </div>
                     </div>
@@ -67,7 +85,7 @@ export default function BirthdayCalendar({ students }: BirthdayCalendarProps) {
         </Popover>
       );
     }
-    return format(day, 'd');
+    return <div>{format(date, 'd')}</div>;
   };
 
   return (
@@ -76,10 +94,10 @@ export default function BirthdayCalendar({ students }: BirthdayCalendarProps) {
       className="rounded-md border"
       modifiers={{ birthdays: birthdayDates }}
       modifiersClassNames={{
-        birthdays: 'bg-primary/20 rounded-full',
+        birthdays: 'bg-primary text-primary-foreground rounded-md hover:bg-primary/90 focus:bg-primary focus:text-primary-foreground',
       }}
       components={{
-        DayContent: DayContent,
+        DayContent: CustomDayContent,
       }}
     />
   );
