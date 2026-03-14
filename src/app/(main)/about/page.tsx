@@ -48,7 +48,7 @@ export default function AboutPage() {
                 <CardHeader>
                     <CardTitle>About The Creators</CardTitle>
                     <CardDescription>
-                        This application was built by a team of passionate students from Sona College of Technology.
+                        This application was proudly developed by ZAYA GROUP OF COMPANY, with a team of passionate students from Sona College of Technology.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-8 pt-6">
