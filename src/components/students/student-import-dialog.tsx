@@ -53,11 +53,6 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
       }
 
       for (const studentData of studentsToImport) {
-        // This check is a first pass, validation will be more strict.
-        if (!studentData || !studentData.name || !studentData.rollNumber) {
-            continue;
-        }
-
         // Add empty photoUrl for validation since it's not in the import file
         const validationData = { ...studentData, photoUrl: '' };
         const validation = studentSchema.safeParse(validationData);
@@ -76,11 +71,9 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
             successCount++;
           } catch (error) {
             errorCount++;
-            // silent fail for this row
           }
         } else {
             errorCount++;
-            // silent fail for this row
         }
       }
       
@@ -160,7 +153,7 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
               birthday: data[birthdayIndex]?.trim(),
               phoneNumber: phoneNumberIndex !== -1 ? data[phoneNumberIndex]?.trim() : undefined,
             };
-        }).filter(student => student.name && student.rollNumber);
+        }).filter(student => student && student.name && student.rollNumber);
 
         await processImportedStudents(studentsToImport);
         
@@ -183,7 +176,8 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
         
         try {
             const result = await extractStudentsFromPdf({ pdfDataUri: dataUri });
-            await processImportedStudents(result.students);
+            const filteredStudents = result.students.filter(student => student && student.name && student.rollNumber);
+            await processImportedStudents(filteredStudents);
         } catch (error) {
             toast({
                 variant: 'destructive',
