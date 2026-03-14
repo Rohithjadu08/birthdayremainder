@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Building, GraduationCap } from "lucide-react";
+import { Building, GraduationCap, Sparkles } from "lucide-react";
 
 const creators = [
   {
@@ -32,7 +32,21 @@ export default function AboutPage() {
         <div className="grid gap-6 md:gap-8">
             <Card>
                 <CardHeader>
-                    <CardTitle>About This Project</CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                        <Sparkles className="text-primary h-6 w-6" />
+                        Our Mission
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-lg text-muted-foreground">
+                        This application is designed to help professors and teachers build stronger connections with their students by never missing a birthday. It provides timely reminders, creative wishing assistance through our AI, Agentverse, and a centralized place to manage student information, fostering a more supportive and personal learning environment.
+                    </p>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>About The Creators</CardTitle>
                     <CardDescription>
                         This application was built by a team of passionate students from Sona College of Technology.
                     </CardDescription>
