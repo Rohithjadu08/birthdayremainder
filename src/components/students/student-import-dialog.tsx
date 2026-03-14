@@ -53,8 +53,8 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
       }
 
       for (const studentData of studentsToImport) {
-        // Skip rows that are empty or just contain whitespace/undefined values
-        if (!studentData || Object.values(studentData).every(v => v === undefined || v === '')) {
+        // Skip rows that are null, empty, or don't have the essential fields.
+        if (!studentData || !studentData.name || !studentData.rollNumber) {
             continue;
         }
 
@@ -90,12 +90,13 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
           title: 'Import Complete with Errors',
           description: `${successCount} students imported successfully. ${errorCount} rows failed.`,
         });
-      } else {
+      } else if (successCount > 0) {
         toast({
           title: 'Import Complete',
           description: `${successCount} students imported successfully.`,
         });
       }
+      // If nothing was imported, don't show a toast.
   }
 
 
@@ -111,7 +112,7 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
 
         const lines = text.split(/\r\n?|\n/).filter(line => line.trim() !== '');
         if (lines.length < 2) {
-            toast({ variant: 'destructive', title: 'Empty or invalid CSV file.' });
+            toast({ variant: 'destructive', title: 'Empty or invalid CSV file. A header row and at least one data row are required.' });
             setIsImporting(false);
             return;
         }
@@ -147,7 +148,7 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
               birthday: data[birthdayIndex]?.trim(),
               phoneNumber: phoneNumberIndex !== -1 ? data[phoneNumberIndex]?.trim() : undefined,
             };
-        });
+        }).filter(student => student.name && student.rollNumber); // Extra filter for safety
 
         await processImportedStudents(studentsToImport);
         
