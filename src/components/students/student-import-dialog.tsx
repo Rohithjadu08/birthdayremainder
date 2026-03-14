@@ -16,7 +16,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser } from '@/firebase';
 import { createStudent } from '@/lib/student-actions';
 import { Loader2 } from 'lucide-react';
-import type { Student } from '@/lib/types';
 import { studentSchema } from '@/lib/student-schema';
 import { extractStudentsFromPdf } from '@/ai/flows/extract-students-flow';
 
@@ -51,43 +50,41 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
           setIsImporting(false);
           return;
       }
+      
+      if (studentsToImport.length === 0) {
+        toast({
+          variant: "destructive",
+          title: 'No Valid Data Found',
+          description: 'No student records with a name and roll number were found in the file.',
+        });
+        setIsImporting(false);
+        setFile(null);
+        setIsOpen(false);
+        return;
+      }
 
       for (const studentData of studentsToImport) {
-        // Sanitize data before validation
         const cleanedData = {
           name: studentData.name?.trim() || '',
           rollNumber: studentData.rollNumber?.trim() || '',
           department: studentData.department?.trim() || '',
           section: studentData.section?.trim() || '',
           birthday: studentData.birthday?.trim() || '',
-          photoUrl: '', // For validation purposes
+          photoUrl: '', // For validation
           phoneNumber: studentData.phoneNumber?.trim() || undefined,
         };
 
         const validation = studentSchema.safeParse(cleanedData);
 
-        if (validation.success && validation.data.name && validation.data.rollNumber) {
+        if (validation.success) {
           try {
-            // Use the validated data which is guaranteed to be in the correct format
-            const dataToCreate: Omit<Student, 'id' | 'userId' | 'imageHint' | 'photoUrl'> & { photoUrl?: string, phoneNumber?: string } = {
-                name: validation.data.name,
-                rollNumber: validation.data.rollNumber,
-                department: validation.data.department,
-                section: validation.data.section,
-                birthday: validation.data.birthday,
-                phoneNumber: validation.data.phoneNumber,
-            };
-            await createStudent(firestore, user.uid, dataToCreate);
+            await createStudent(firestore, user.uid, validation.data);
             successCount++;
           } catch (error) {
             errorCount++;
           }
         } else {
-            if (validation.success && (!validation.data.name || !validation.data.rollNumber)) {
-              // This is an empty but structurally valid row, just skip it.
-            } else {
-              errorCount++;
-            }
+          errorCount++;
         }
       }
       
@@ -116,6 +113,10 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
           description: 'No valid student data was found in the file.',
         });
       }
+
+      setIsImporting(false);
+      setFile(null);
+      setIsOpen(false);
   }
 
 
@@ -170,10 +171,6 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
         }).filter(s => s.name && s.rollNumber);
 
         await processImportedStudents(studentsToImport);
-        
-        setIsImporting(false);
-        setFile(null);
-        setIsOpen(false);
     };
     reader.readAsText(file);
   }
@@ -198,10 +195,7 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
                 title: 'AI Processing Failed',
                 description: 'Could not extract student data from the file. Please ensure it is a text-based document with a clear structure.',
             });
-        } finally {
-            setIsImporting(false);
-            setFile(null);
-            setIsOpen(false);
+             setIsImporting(false);
         }
     };
     reader.readAsDataURL(file);
@@ -221,7 +215,6 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
     if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
         handleCsvImport(file);
     } else {
-        // For PDF and other formats, use the AI-powered extractor
         handleAiImport(file);
     }
   };
