@@ -53,7 +53,12 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
       }
 
       for (const studentData of studentsToImport) {
-        // Add empty photoUrl for validation
+        // Skip rows that are empty or just contain whitespace/undefined values
+        if (!studentData || Object.values(studentData).every(v => v === undefined || v === '')) {
+            continue;
+        }
+
+        // Add empty photoUrl for validation since it's not in the import file
         const validationData = { ...studentData, photoUrl: '' };
         const validation = studentSchema.safeParse(validationData);
 
@@ -79,10 +84,18 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
         }
       }
       
-      toast({
-        title: 'Import Complete',
-        description: `${successCount} students imported successfully. ${errorCount} rows failed.`,
-      });
+      if (errorCount > 0) {
+        toast({
+          variant: "destructive",
+          title: 'Import Complete with Errors',
+          description: `${successCount} students imported successfully. ${errorCount} rows failed.`,
+        });
+      } else {
+        toast({
+          title: 'Import Complete',
+          description: `${successCount} students imported successfully.`,
+        });
+      }
   }
 
 
@@ -96,7 +109,7 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
             return;
         }
 
-        const lines = text.split(/\r\n|\n/).filter(line => line.trim() !== '');
+        const lines = text.split(/\r\n?|\n/).filter(line => line.trim() !== '');
         if (lines.length < 2) {
             toast({ variant: 'destructive', title: 'Empty or invalid CSV file.' });
             setIsImporting(false);
