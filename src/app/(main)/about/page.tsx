@@ -50,7 +50,7 @@ export default function AboutPage() {
                                 <p className="text-md font-medium text-primary">{creator.role}</p>
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground pt-1">
                                     <GraduationCap className="h-4 w-4" />
-                                    <span>B.Tech - Artificial Intelligence and Machine Learning</span>
+                                    <span>B.E - CSE(AIML)</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <Building className="h-4 w-4" />
