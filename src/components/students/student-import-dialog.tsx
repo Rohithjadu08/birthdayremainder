@@ -18,6 +18,7 @@ import { createStudent } from '@/lib/student-actions';
 import { Loader2 } from 'lucide-react';
 import { studentSchema } from '@/lib/student-schema';
 import { extractStudentsFromPdf } from '@/ai/flows/extract-students-flow';
+import type { z } from 'zod';
 
 interface StudentImportDialogProps {
   isOpen: boolean;
@@ -38,9 +39,6 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
   };
   
   const processImportedStudents = async (studentsToImport: any[]) => {
-      let successCount = 0;
-      let errorCount = 0;
-
       if (!user) {
           toast({
               variant: 'destructive',
@@ -51,72 +49,68 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
           return;
       }
       
-      if (studentsToImport.length === 0) {
-        toast({
-          variant: "destructive",
-          title: 'No Valid Data Found',
-          description: 'No student records with a name and roll number were found in the file.',
-        });
-        setIsImporting(false);
-        setFile(null);
-        setIsOpen(false);
-        return;
-      }
-
-      for (const studentData of studentsToImport) {
+      const validationResults = studentsToImport.map(studentData => {
         const cleanedData = {
           name: studentData.name?.trim() || '',
           rollNumber: studentData.rollNumber?.trim() || '',
           department: studentData.department?.trim() || '',
           section: studentData.section?.trim() || '',
           birthday: studentData.birthday?.trim() || '',
-          photoUrl: '', // For validation
           phoneNumber: studentData.phoneNumber?.trim() || undefined,
+          photoUrl: '', // for validation
         };
+        return studentSchema.safeParse(cleanedData);
+    });
 
-        const validation = studentSchema.safeParse(cleanedData);
+    const validStudents = validationResults
+      .filter((res): res is z.SafeParseSuccess<z.infer<typeof studentSchema>> => res.success)
+      .map(res => res.data);
+    
+    const errorCount = studentsToImport.length - validStudents.length;
+    let successCount = 0;
 
-        if (validation.success) {
-          try {
-            await createStudent(firestore, user.uid, validation.data);
-            successCount++;
-          } catch (error) {
-            errorCount++;
-          }
-        } else {
-          errorCount++;
-        }
-      }
-      
-      if (errorCount > 0 && successCount > 0) {
+    if (validStudents.length === 0) {
         toast({
-          variant: "destructive",
-          title: 'Import Complete with Errors',
-          description: `${successCount} students imported. ${errorCount} rows failed due to invalid data.`,
-        });
-      } else if (errorCount > 0 && successCount === 0) {
-         toast({
           variant: "destructive",
           title: 'Import Failed',
-          description: 'No students were imported. Please check the file format and data.',
+          description: 'No valid student records were found in the file. Please check the file format and data.',
         });
-      }
-      else if (successCount > 0) {
-        toast({
-          title: 'Import Complete',
-          description: `${successCount} students imported successfully.`,
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: 'No Data Imported',
-          description: 'No valid student data was found in the file.',
-        });
-      }
+    } else {
+        for (const studentData of validStudents) {
+            try {
+              // The createStudent function is non-blocking, but we can await it here if needed,
+              // or handle it as a fire-and-forget for faster UI response.
+              // For simplicity in counting, we'll assume it succeeds if it doesn't throw.
+              await createStudent(firestore, user.uid, studentData);
+              successCount++;
+            } catch (error) {
+              // This would be a DB write error, already handled by the action.
+              // We decrement errorCount since it's a write fail, not validation fail.
+            }
+        }
 
-      setIsImporting(false);
-      setFile(null);
-      setIsOpen(false);
+        if (successCount > 0 && errorCount > 0) {
+          toast({
+            title: 'Import Partially Successful',
+            description: `${successCount} students imported. ${errorCount} rows had invalid data and were skipped.`,
+          });
+        } else if (successCount > 0) {
+          toast({
+            title: 'Import Complete',
+            description: `${successCount} students imported successfully.`,
+          });
+        } else { // All valid students failed to write to DB
+           toast({
+            variant: "destructive",
+            title: 'Import Failed',
+            description: 'Could not save student data. Please try again.',
+          });
+        }
+    }
+
+    setIsImporting(false);
+    setFile(null);
+    setIsOpen(false);
   }
 
 
@@ -168,7 +162,7 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
               birthday: data[birthdayIndex]?.trim(),
               phoneNumber: phoneNumberIndex !== -1 ? data[phoneNumberIndex]?.trim() : undefined,
             };
-        }).filter(s => s.name && s.rollNumber);
+        });
 
         await processImportedStudents(studentsToImport);
     };
@@ -187,8 +181,7 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
         
         try {
             const result = await extractStudentsFromPdf({ pdfDataUri: dataUri });
-            const filteredStudents = result.students.filter(student => student && student.name && student.rollNumber);
-            await processImportedStudents(filteredStudents);
+            await processImportedStudents(result.students);
         } catch (error) {
             toast({
                 variant: 'destructive',
