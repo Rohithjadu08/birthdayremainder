@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -82,7 +83,7 @@ export function StudentDialog({ isOpen, setIsOpen, student }: StudentSheetProps)
   }, [student, form, isOpen])
 
 
-  const onSubmit = async (values: z.infer<typeof studentSchema>) => {
+  const onSubmit = async (values: z.infer<typeof studentSchema>>) => {
     setIsSubmitting(true);
     try {
         let submissionData = { ...values };
