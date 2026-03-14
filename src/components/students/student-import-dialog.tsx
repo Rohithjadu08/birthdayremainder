@@ -53,7 +53,7 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
       }
 
       for (const studentData of studentsToImport) {
-        // Skip rows that are null, empty, or don't have the essential fields.
+        // This check is a first pass, validation will be more strict.
         if (!studentData || !studentData.name || !studentData.rollNumber) {
             continue;
         }
@@ -76,27 +76,39 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
             successCount++;
           } catch (error) {
             errorCount++;
-            console.error("Firestore creation error:", error);
+            // silent fail for this row
           }
         } else {
             errorCount++;
-            console.error("Validation failed for row:", studentData, validation.error.flatten().fieldErrors);
+            // silent fail for this row
         }
       }
       
-      if (errorCount > 0) {
+      if (errorCount > 0 && successCount > 0) {
         toast({
           variant: "destructive",
           title: 'Import Complete with Errors',
-          description: `${successCount} students imported successfully. ${errorCount} rows failed.`,
+          description: `${successCount} students imported. ${errorCount} rows failed due to invalid data.`,
         });
-      } else if (successCount > 0) {
+      } else if (errorCount > 0 && successCount === 0) {
+         toast({
+          variant: "destructive",
+          title: 'Import Failed',
+          description: 'No students were imported. Please check the file format and data.',
+        });
+      }
+      else if (successCount > 0) {
         toast({
           title: 'Import Complete',
           description: `${successCount} students imported successfully.`,
         });
+      } else {
+        toast({
+          variant: "destructive",
+          title: 'No Data Imported',
+          description: 'No valid student data was found in the file.',
+        });
       }
-      // If nothing was imported, don't show a toast.
   }
 
 
@@ -148,7 +160,7 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
               birthday: data[birthdayIndex]?.trim(),
               phoneNumber: phoneNumberIndex !== -1 ? data[phoneNumberIndex]?.trim() : undefined,
             };
-        }).filter(student => student.name && student.rollNumber); // Extra filter for safety
+        }).filter(student => student.name && student.rollNumber);
 
         await processImportedStudents(studentsToImport);
         
@@ -173,7 +185,6 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
             const result = await extractStudentsFromPdf({ pdfDataUri: dataUri });
             await processImportedStudents(result.students);
         } catch (error) {
-            console.error("PDF extraction error:", error);
             toast({
                 variant: 'destructive',
                 title: 'PDF Processing Failed',
