@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PartyPopper, MessageCircle, Mail } from 'lucide-react';
 import Confetti from '@/components/shared/confetti';
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase';
 import { generateBirthdayEmail } from '@/ai/flows/generate-birthday-email-flow';
@@ -51,9 +51,18 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
     }
   }, [user, students, toast]);
   
+  // Create a stable dependency from the students list.
+  const studentIdString = useMemo(() => students.map(s => s.id).sort().join(','), [students]);
+
   useEffect(() => {
     // This effect runs on the client after hydration.
     // It is responsible for showing the one-time birthday notification.
+
+    // Guard against running on the server
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     if (students.length === 0 || !user) {
       return;
     }
@@ -85,10 +94,9 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
     // Mark notification as sent for this session.
     sessionStorage.setItem(notificationKey, 'true');
 
-    // We rely on stringifying the student list to ensure this effect only re-runs
-    // if the actual list of people with birthdays changes.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(students), user]);
+    // We rely on the stable studentIdString to ensure this effect only re-runs
+    // when the list of people with birthdays actually changes.
+  }, [studentIdString, user, toast]);
 
 
   if (students.length === 0) {
