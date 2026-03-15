@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import type { Student } from '@/lib/types';
 import {
   Dialog,
@@ -17,7 +17,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser } from '@/firebase';
 import { createStudent } from '@/lib/student-actions';
 import { studentSchema } from '@/lib/student-schema';
-import Papa from 'papaparse';
 import { extractStudentsFromFile } from '@/ai/flows/extract-students-from-file-flow';
 import { FileUp, Loader2 } from 'lucide-react';
 import type { z } from 'zod';
@@ -42,15 +41,7 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
     const files = event.target.files;
     if (files && files.length > 0) {
       const selectedFile = files[0];
-      if (selectedFile.type === 'text/csv' || selectedFile.type === 'application/pdf') {
-        setFile(selectedFile);
-      } else {
-        toast({
-          variant: 'destructive',
-          title: 'Invalid File Type',
-          description: 'Please upload a CSV or PDF file.',
-        });
-      }
+      setFile(selectedFile);
     }
   };
 
@@ -80,25 +71,26 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
 
     for (let i = 0; i < totalStudents; i++) {
         const rawStudent = studentDataArray[i];
+
+        if (!rawStudent || Object.keys(rawStudent).length === 0) {
+            validationErrorCount++;
+            continue;
+        }
         
-        // Clean and normalize keys from CSV/AI
         const studentData: Partial<StagingStudent> = Object.entries(rawStudent).reduce((acc, [key, value]) => {
             const trimmedKey = key.trim();
-            if (value !== null && value !== '') {
-                acc[trimmedKey as keyof StagingStudent] = value as any;
+            if (value !== null && value !== '' && value !== undefined) {
+                acc[trimmedKey as keyof StagingStudent] = String(value);
             }
             return acc;
         }, {} as Record<string, any>);
 
 
-        // Coerce birthday to a valid date format if possible
         if (studentData.birthday) {
-            try {
-                const date = new Date(studentData.birthday);
-                studentData.birthday = date.toISOString().split('T')[0];
-            } catch (e) {
-                studentData.birthday = ''; // Invalidate if unparsable
-            }
+          // AI is asked to format as YYYY-MM-DD. This is a final check.
+          if (isNaN(Date.parse(studentData.birthday))) {
+            delete studentData.birthday;
+          }
         }
         
         const validation = studentSchema.safeParse(studentData);
@@ -118,7 +110,7 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
     
     toast({
         title: 'Import Complete',
-        description: `${successCount} students imported successfully. ${validationErrorCount} rows had invalid data. ${dbErrorCount} rows failed to save.`,
+        description: `${successCount} students imported. ${validationErrorCount} rows had invalid data. ${dbErrorCount} rows failed to save.`,
         duration: 9000,
     });
 
@@ -135,40 +127,26 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
     setIsImporting(true);
     setProgress(0);
 
-    if (file.type === 'text/csv') {
-      Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: (results) => {
-          processImportedStudents(results.data);
-        },
-        error: (error: any) => {
-          toast({ variant: 'destructive', title: 'CSV Parsing Error', description: error.message });
-          setIsImporting(false);
-        },
-      });
-    } else if (file.type === 'application/pdf') {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = async () => {
-        try {
-          const dataUri = reader.result as string;
-          const result = await extractStudentsFromFile({ fileDataUri: dataUri });
-          if(result && result.students) {
-            processImportedStudents(result.students);
-          } else {
-            throw new Error("AI model returned no students.");
-          }
-        } catch (error: any) {
-          toast({ variant: 'destructive', title: 'PDF Extraction Failed', description: error.message || 'Could not process PDF file.' });
-          setIsImporting(false);
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = async () => {
+      try {
+        const dataUri = reader.result as string;
+        const result = await extractStudentsFromFile({ fileDataUri: dataUri });
+        if (result && result.students && result.students.length > 0) {
+          processImportedStudents(result.students);
+        } else {
+          throw new Error("The AI could not extract student data. Please ensure the file contains clear information.");
         }
-      };
-      reader.onerror = () => {
-        toast({ variant: 'destructive', title: 'File Read Error', description: 'Could not read the selected file.' });
+      } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Import Failed', description: error.message || 'Could not process the file.' });
         setIsImporting(false);
       }
-    }
+    };
+    reader.onerror = () => {
+      toast({ variant: 'destructive', title: 'File Read Error', description: 'Could not read the selected file.' });
+      setIsImporting(false);
+    };
   };
 
   return (
@@ -177,19 +155,19 @@ export function StudentImportDialog({ isOpen, setIsOpen }: StudentImportDialogPr
         <DialogHeader>
           <DialogTitle>Import Students</DialogTitle>
           <DialogDescription>
-            Upload a CSV or PDF file to bulk-add students. Make sure your file includes columns for at least 'name', 'rollNumber', 'department', 'section', and 'birthday'.
+            Upload a CSV, PDF, or text file to bulk-add students. The AI will extract details like name, roll number, department, and birthday.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <Input
             type="file"
-            accept=".csv, application/pdf"
+            accept=".csv, application/pdf, .txt, .docx"
             onChange={handleFileChange}
             disabled={isImporting}
           />
           {isImporting && (
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Importing students, please wait...</p>
+              <p className="text-sm text-muted-foreground">AI is processing your file, please wait...</p>
               <Progress value={progress} />
             </div>
           )}

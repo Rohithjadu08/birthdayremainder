@@ -41,7 +41,7 @@ const prompt = ai.definePrompt({
   name: 'extractStudentsFromFilePrompt',
   input: { schema: ExtractStudentsInputSchema },
   output: { schema: ExtractStudentsOutputSchema },
-  prompt: `You are an expert data extraction assistant. Your task is to analyze the provided file and extract a list of students.
+  prompt: `You are an expert data extraction assistant. Your task is to analyze the provided file—which could be a PDF, CSV, or other text-based document—and extract a list of students.
 
 The file content is provided below as a data URI:
 {{media url=fileDataUri}}
@@ -51,12 +51,19 @@ Scan the document and identify all student records. For each student, extract th
 - rollNumber
 - department
 - section
-- birthday (must be in YYYY-MM-DD format, if the year is not specified, use a placeholder like 2000)
+- birthday
 - phoneNumber
+
+CRITICAL INSTRUCTIONS FOR BIRTHDAY FIELD:
+- You MUST do your best to parse any date format (e.g., "Jan 1, 2002", "01/01/2002", "2002-01-01", "1st January 2002").
+- The final output for the 'birthday' field MUST be in YYYY-MM-DD format.
+- If the year is not specified, use a placeholder year like '2000'. For example, if you see "March 5th", you should output "2000-03-05".
+- If a date is completely unparseable or missing, omit the 'birthday' field for that student.
 
 Return the data as a JSON object containing a "students" array. Each object in the array should represent one student.
 If a piece of information for a student is not found, omit the corresponding key.
 Ignore any headers, footers, or irrelevant text in the document. Only return the structured student data.
+If the file is a CSV, treat the first row as the header.
 `,
 });
 
