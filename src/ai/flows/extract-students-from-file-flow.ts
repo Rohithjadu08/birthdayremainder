@@ -21,14 +21,14 @@ const ExtractedStudentSchema = z.object({
     phoneNumber: z.string().optional().describe("The student's phone number.")
 });
 
-export const ExtractStudentsInputSchema = z.object({
+const ExtractStudentsInputSchema = z.object({
   fileDataUri: z.string().describe(
       "The content of the file as a data URI. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
   ),
 });
 export type ExtractStudentsInput = z.infer<typeof ExtractStudentsInputSchema>;
 
-export const ExtractStudentsOutputSchema = z.object({
+const ExtractStudentsOutputSchema = z.object({
   students: z.array(ExtractedStudentSchema).describe("An array of student objects extracted from the file."),
 });
 export type ExtractStudentsOutput = z.infer<typeof ExtractStudentsOutputSchema>;
