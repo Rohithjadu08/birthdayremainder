@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PartyPopper, MessageCircle, Mail } from 'lucide-react';
 import Confetti from '@/components/shared/confetti';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase';
 import { generateBirthdayEmail } from '@/ai/flows/generate-birthday-email-flow';
@@ -22,7 +22,6 @@ interface TodaysBirthdayCardProps {
 export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps) {
   const { toast } = useToast();
   const { user } = useUser();
-  const [notificationSent, setNotificationSent] = useState(false);
 
   const handleSendReminderEmail = useCallback(async () => {
     if (!user || students.length === 0) return;
@@ -53,38 +52,43 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
   }, [user, students, toast]);
   
   useEffect(() => {
-    if (typeof window === 'undefined' || notificationSent || students.length === 0 || !user) {
+    // This effect runs on the client after hydration.
+    // It is responsible for showing the one-time birthday notification.
+    if (students.length === 0 || !user) {
       return;
     }
 
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     const notificationKey = `birthdayNotification_${user.uid}_${todayStr}`;
 
-    if (!sessionStorage.getItem(notificationKey)) {
-        let description;
-        const capitalizedNames = students.map(s => capitalizeName(s.name));
-
-        if (students.length === 1) {
-          description = `It's ${capitalizedNames[0]}'s birthday today! Don't forget to wish them.`;
-        } else {
-          const lastName = capitalizedNames.pop();
-          description = `It's ${capitalizedNames.join(', ')} and ${lastName}'s birthday today! Don't forget to wish them.`;
-        }
-        
-        toast({
-          title: "🎉 Happy Birthday!",
-          description: description,
-          duration: 9000,
-        });
-
-        handleSendReminderEmail();
-        
-        sessionStorage.setItem(notificationKey, 'true');
+    // Check if notification for today has already been sent in this session
+    if (sessionStorage.getItem(notificationKey)) {
+        return;
     }
 
-    setNotificationSent(true);
+    let description;
+    const capitalizedNames = students.map(s => capitalizeName(s.name));
 
-  }, [students, user, toast, notificationSent, handleSendReminderEmail]);
+    if (students.length === 1) {
+      description = `It's ${capitalizedNames[0]}'s birthday today! Don't forget to wish them.`;
+    } else {
+      const lastName = capitalizedNames.pop();
+      description = `It's ${capitalizedNames.join(', ')} and ${lastName}'s birthday today! Don't forget to wish them.`;
+    }
+    
+    toast({
+      title: "🎉 Happy Birthday!",
+      description: description,
+      duration: 9000,
+    });
+    
+    // Mark notification as sent for this session.
+    sessionStorage.setItem(notificationKey, 'true');
+
+    // We rely on stringifying the student list to ensure this effect only re-runs
+    // if the actual list of people with birthdays changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(students), user]);
 
 
   if (students.length === 0) {
