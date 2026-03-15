@@ -30,7 +30,7 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
     // This effect runs on the client after hydration.
     // It shows a one-time notification.
 
-    if (typeof window === 'undefined' || students.length === 0 || !user) {
+    if (typeof window === 'undefined' || !window.sessionStorage || students.length === 0 || !user) {
       return;
     }
 
@@ -62,12 +62,12 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
 
   }, [studentIds, students, user, toast]);
 
-  const handleSendReminderEmail = async () => {
+  const handlePrepareReminderEmail = async () => {
     if (!user || students.length === 0) return;
 
     setIsGeneratingEmail(true);
     toast({
-      description: "Generating your reminder email...",
+      description: "Preparing your reminder email...",
     });
 
     try {
@@ -85,7 +85,7 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
       console.error("Failed to generate birthday email:", error);
       toast({
         variant: "destructive",
-        title: "Email Generation Failed",
+        title: "Email Preparation Failed",
         description: "Could not prepare the reminder email.",
       });
     } finally {
@@ -110,9 +110,9 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
                     Wishing a very happy birthday to the following students today!
                 </p>
             </div>
-            <Button variant="outline" onClick={handleSendReminderEmail} disabled={isGeneratingEmail}>
+            <Button variant="outline" onClick={handlePrepareReminderEmail} disabled={isGeneratingEmail}>
                 <Mail className="mr-2 h-4 w-4" />
-                {isGeneratingEmail ? 'Generating...' : 'Send Email Reminder'}
+                {isGeneratingEmail ? 'Preparing...' : 'Prepare Reminder Email'}
             </Button>
       </CardHeader>
       <CardContent>
