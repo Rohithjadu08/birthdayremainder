@@ -1,7 +1,7 @@
 'use client';
 
 import type { Student } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PartyPopper, MessageCircle, Mail } from 'lucide-react';
 import Confetti from '@/components/shared/confetti';
@@ -27,9 +27,6 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
   const studentIds = useMemo(() => students.map(s => s.id).sort().join(','), [students]);
 
   useEffect(() => {
-    // This effect runs on the client after hydration.
-    // It shows a one-time notification.
-
     if (typeof window === 'undefined' || !window.sessionStorage || students.length === 0 || !user) {
       return;
     }
@@ -41,7 +38,6 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
       return;
     }
 
-    // --- Show Toast Notification ---
     const capitalizedNames = students.map(s => capitalizeName(s.name));
     let description;
     if (students.length === 1) {
@@ -57,7 +53,6 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
       duration: 9000,
     });
     
-    // Mark as actioned for this session to avoid re-triggering on navigation.
     sessionStorage.setItem(notificationKey, 'true');
 
   }, [studentIds, students, user, toast]);
@@ -100,20 +95,14 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
 
   return (
     <Card className="relative overflow-hidden">
-        <CardHeader className="flex flex-row items-start justify-between">
-            <div>
-                <CardTitle className="flex items-center gap-2">
-                <PartyPopper className="text-accent" />
-                Happy Birthday!
-                </CardTitle>
-                 <p className="text-muted-foreground text-sm mt-2">
-                    Wishing a very happy birthday to the following students today!
-                </p>
-            </div>
-            <Button variant="outline" onClick={handlePrepareReminderEmail} disabled={isGeneratingEmail}>
-                <Mail className="mr-2 h-4 w-4" />
-                {isGeneratingEmail ? 'Preparing...' : 'Prepare Reminder Email'}
-            </Button>
+        <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+            <PartyPopper className="text-accent" />
+            Happy Birthday!
+            </CardTitle>
+            <p className="text-muted-foreground text-sm mt-2">
+                It's time to celebrate! The students below have their birthday today.
+            </p>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -147,6 +136,19 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
           ))}
         </div>
       </CardContent>
+      <CardFooter className="flex-col items-start gap-4 border-t bg-card pt-6">
+        <div className="flex items-center gap-2">
+            <Mail className="h-5 w-5 text-primary" />
+            <h4 className="font-semibold">Get an Email Reminder</h4>
+        </div>
+        <p className="text-sm text-muted-foreground">
+            For your security, this app cannot send emails automatically. Click the button to open a pre-written reminder in your own email application.
+        </p>
+        <Button onClick={handlePrepareReminderEmail} disabled={isGeneratingEmail}>
+            <Mail className="mr-2 h-4 w-4" />
+            {isGeneratingEmail ? 'Preparing...' : 'Prepare Reminder Email'}
+        </Button>
+      </CardFooter>
       <Confetti />
     </Card>
   );
