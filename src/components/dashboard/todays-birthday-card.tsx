@@ -12,7 +12,6 @@ import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { capitalizeName } from '@/lib/utils';
 import { generateBirthdayEmail } from '@/ai/flows/generate-birthday-email-flow';
-import { ToastAction } from "@/components/ui/toast"
 
 interface TodaysBirthdayCardProps {
   students: Student[];
@@ -28,13 +27,10 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
 
   const handlePrepareEmail = useCallback(async () => {
     if (!user || students.length === 0) {
-      toast({
-        variant: "destructive",
-        title: "Cannot prepare email",
-        description: "Not logged in or no students with birthdays today.",
-      });
-      return;
+      return; // Don't show toast if there's nothing to do.
     }
+    // Prevent multiple concurrent executions
+    if (isGeneratingEmail) return;
 
     setIsGeneratingEmail(true);
     try {
@@ -64,40 +60,30 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
     } finally {
       setIsGeneratingEmail(false);
     }
-  }, [students, user, toast]);
+  }, [students, user, toast, isGeneratingEmail]);
 
   useEffect(() => {
-    // Guard against running if there are no birthdays, no user, or on the server.
     if (typeof window === 'undefined' || students.length === 0 || !user) {
       return;
     }
-
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     const notificationKey = `birthdayNotification_${user.uid}_${todayStr}`;
-    
-    // Show a popup (toast) notification once per day
+
     if (!sessionStorage.getItem(notificationKey)) {
-        const capitalizedNames = students.map(s => capitalizeName(s.name));
-        let description: string;
-        if (students.length === 1) {
-            description = `It's ${capitalizedNames[0]}'s birthday today!`;
-        } else {
-            const lastName = capitalizedNames.pop();
-            description = `It's ${capitalizedNames.join(', ')} and ${lastName}'s birthday today!`;
-        }
-        toast({
-            title: "🎉 Birthday Reminder!",
-            description: description,
-            duration: 9000,
-            action: (
-              <ToastAction altText="Prepare Email" onClick={handlePrepareEmail}>
-                Prepare Email
-              </ToastAction>
-            ),
-        });
-        sessionStorage.setItem(notificationKey, 'true');
+      // Automatically attempt to prepare the email when a birthday is detected.
+      handlePrepareEmail();
+      
+      // Notify the user that the action was attempted.
+      toast({
+        title: '🎉 Birthday Alert!',
+        description: "A reminder email has been prepared. Check your email client or allow popups if you don't see it.",
+        duration: 9000,
+      });
+
+      sessionStorage.setItem(notificationKey, 'true');
     }
   }, [studentIds, students, user, toast, handlePrepareEmail]);
+
 
   if (students.length === 0) {
     return null;
