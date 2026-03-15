@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle, Search, Edit, Trash2 } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Search, Edit, Trash2, FileUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { StudentDialog } from './student-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -31,6 +31,7 @@ import {
 import { deleteStudent } from '@/lib/student-actions';
 import { useFirestore, useUser } from '@/firebase';
 import { capitalizeName } from '@/lib/utils';
+import { StudentImportDialog } from './student-import-dialog';
 
 
 interface StudentTableProps {
@@ -46,6 +47,7 @@ export default function StudentTable({ students: initialStudents }: StudentTable
   
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
   const departments = useMemo(() => ['all', ...Array.from(new Set(initialStudents.map(s => s.department)))], [initialStudents]);
@@ -104,6 +106,9 @@ export default function StudentTable({ students: initialStudents }: StudentTable
                     {departments.map(dep => <SelectItem key={dep} value={dep}>{dep === 'all' ? 'All Departments' : dep}</SelectItem>)}
                 </SelectContent>
             </Select>
+             <Button onClick={() => setIsImportDialogOpen(true)} variant="outline" className="w-full sm:w-auto whitespace-nowrap">
+                <FileUp className="mr-2 h-4 w-4" /> Import
+            </Button>
             <Button onClick={handleAdd} className="w-full sm:w-auto whitespace-nowrap">
                 <PlusCircle className="mr-2 h-4 w-4" /> Add Student
             </Button>
@@ -164,7 +169,7 @@ export default function StudentTable({ students: initialStudents }: StudentTable
             ) : (
               <TableRow>
                 <TableCell colSpan={7} className="text-center h-24">
-                  No students found. Add a student to get started.
+                  No students found. Add or import students to get started.
                 </TableCell>
               </TableRow>
             )}
@@ -176,6 +181,11 @@ export default function StudentTable({ students: initialStudents }: StudentTable
         isOpen={isSheetOpen}
         setIsOpen={setIsSheetOpen}
         student={selectedStudent}
+      />
+
+      <StudentImportDialog
+        isOpen={isImportDialogOpen}
+        setIsOpen={setIsImportDialogOpen}
       />
       
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>

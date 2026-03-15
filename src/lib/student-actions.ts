@@ -3,33 +3,50 @@
 import {
   collection,
   doc,
+  addDoc,
   Firestore,
 } from 'firebase/firestore';
 import {
-  addDocumentNonBlocking,
   deleteDocumentNonBlocking,
   setDocumentNonBlocking,
 } from '@/firebase';
 import { placeholderImages } from './placeholder-images.json';
 import type { Student } from './types';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 
-export function createStudent(
+export async function createStudent(
   firestore: Firestore,
   userId: string,
   studentData: Omit<Student, 'id' | 'userId' | 'imageHint'> & { photoUrl?: string }
-): Promise<any> {
+): Promise<boolean> {
   const studentsCollection = collection(firestore, 'users', userId, 'students');
-  const finalPhotoUrl = studentData.photoUrl || placeholderImages[Math.floor(Math.random() * placeholderImages.length)].imageUrl;
   
+  const placeholder = placeholderImages[Math.floor(Math.random() * placeholderImages.length)];
+  const finalPhotoUrl = studentData.photoUrl || placeholder.imageUrl;
+  const imageHint = studentData.photoUrl ? 'student portrait' : placeholder.imageHint;
+
   const newStudentData = {
     ...studentData,
     userId: userId,
     photoUrl: finalPhotoUrl,
-    imageHint: 'student portrait',
+    imageHint: imageHint,
   };
 
-  return addDocumentNonBlocking(studentsCollection, newStudentData);
+  try {
+    await addDoc(studentsCollection, newStudentData);
+    return true;
+  } catch (error) {
+     const permissionError = new FirestorePermissionError({
+        path: studentsCollection.path,
+        operation: 'create',
+        requestResourceData: newStudentData,
+      });
+      errorEmitter.emit('permission-error', permissionError);
+      console.error("Error creating student:", error);
+      return false;
+  }
 }
 
 export async function updateStudent(
