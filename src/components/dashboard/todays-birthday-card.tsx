@@ -62,7 +62,7 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
 
     setIsGeneratingEmail(true);
     toast({
-      description: "Preparing your reminder email...",
+      description: "Opening your reminder email...",
     });
 
     try {
@@ -136,18 +136,16 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
           ))}
         </div>
       </CardContent>
-      <CardFooter className="flex-col items-start gap-4 border-t bg-card pt-6">
-        <div className="flex items-center gap-2">
-            <Mail className="h-5 w-5 text-primary" />
-            <h4 className="font-semibold">Get an Email Reminder</h4>
-        </div>
-        <p className="text-sm text-muted-foreground">
-            For your security, this app cannot send emails automatically. Click the button to open a pre-written reminder in your own email application.
-        </p>
-        <Button onClick={handlePrepareReminderEmail} disabled={isGeneratingEmail}>
-            <Mail className="mr-2 h-4 w-4" />
-            {isGeneratingEmail ? 'Preparing...' : 'Prepare Reminder Email'}
-        </Button>
+      <CardFooter className="border-t bg-card pt-6">
+          <div className="flex w-full items-center justify-between">
+              <p className="text-sm text-muted-foreground max-w-xs">
+                  A reminder email is ready to be sent.
+              </p>
+              <Button onClick={handlePrepareReminderEmail} disabled={isGeneratingEmail}>
+                  <Mail className="mr-2 h-4 w-4" />
+                  {isGeneratingEmail ? 'Opening...' : 'Open Email'}
+              </Button>
+          </div>
       </CardFooter>
       <Confetti />
     </Card>
