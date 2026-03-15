@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { getTodaysBirthdays, getUpcomingBirthdays } from '@/lib/data';
 import TodaysBirthdayCard from '@/components/dashboard/todays-birthday-card';
 import AiChatCard from '@/components/dashboard/ai-chat-card';
@@ -18,18 +18,18 @@ export default function DashboardPage() {
   const studentsCollection = useMemoFirebase(() => (user ? collection(firestore, 'users', user.uid, 'students') : null), [firestore, user]);
   const { data: allStudents, isLoading: studentsLoading } = useCollection<Student>(studentsCollection);
 
+  const [todaysBirthdays, setTodaysBirthdays] = useState<Student[]>([]);
+  const [upcomingBirthdays, setUpcomingBirthdays] = useState<Student[]>([]);
+
   const isLoading = isUserLoading || studentsLoading;
 
-  const todaysBirthdays = useMemo(() => {
-    if (!allStudents) return [];
-    return getTodaysBirthdays(allStudents);
+  useEffect(() => {
+    if (allStudents) {
+      setTodaysBirthdays(getTodaysBirthdays(allStudents));
+      setUpcomingBirthdays(getUpcomingBirthdays(allStudents));
+    }
   }, [allStudents]);
 
-  const upcomingBirthdays = useMemo(() => {
-    if (!allStudents) return [];
-    return getUpcomingBirthdays(allStudents);
-  }, [allStudents]);
-  
   if (isLoading) {
     return <div className="flex items-center justify-center h-full"><Loader className="h-8 w-8 animate-spin" /></div>;
   }

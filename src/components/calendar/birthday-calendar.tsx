@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import type { Student } from '@/lib/types';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -15,12 +15,16 @@ interface BirthdayCalendarProps {
 }
 
 export default function BirthdayCalendar({ students }: BirthdayCalendarProps) {
-  const birthdaysByDate = useMemo(() => {
+  const [birthdaysByDate, setBirthdaysByDate] = useState(new Map<string, Student[]>());
+  const [birthdayDates, setBirthdayDates] = useState<Date[]>([]);
+
+  useEffect(() => {
+    // This effect runs only on the client, after hydration, preventing mismatch
     const map = new Map<string, Student[]>();
+    const currentYear = new Date().getFullYear();
     students.forEach(student => {
       // Robustly parse 'YYYY-MM-DD' to avoid timezone issues.
       const [year, month, day] = student.birthday.split('-').map(Number);
-      const currentYear = new Date().getFullYear();
       // Create date in local timezone. Month is 0-indexed.
       const displayDate = new Date(currentYear, month - 1, day);
       
@@ -31,15 +35,14 @@ export default function BirthdayCalendar({ students }: BirthdayCalendarProps) {
       }
       map.get(key)!.push(student);
     });
-    return map;
-  }, [students]);
+    setBirthdaysByDate(map);
 
-  const birthdayDates = useMemo(() => {
-    return Array.from(birthdaysByDate.keys()).map(key => {
+    const dates = Array.from(map.keys()).map(key => {
         const [year, month, day] = key.split('-').map(Number);
         return new Date(year, month - 1, day);
     });
-  }, [birthdaysByDate]);
+    setBirthdayDates(dates);
+  }, [students]);
 
   const CustomDayContent = (props: DayContentProps) => {
     const { date, displayMonth } = props;
