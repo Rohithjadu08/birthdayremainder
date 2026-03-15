@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Student } from '@/lib/types';
@@ -106,7 +107,7 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
                 Happy Birthday!
             </CardTitle>
             <CardDescription>
-                It's time to celebrate! Click the button below to open a pre-written reminder in your email client.
+                It's time to celebrate! Your automatic email reminder is ready to be opened.
             </CardDescription>
       </CardHeader>
       <CardContent>
@@ -144,11 +145,11 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
         <div className="mt-6">
              <Alert>
                 <Mail className="h-4 w-4" />
-                <AlertTitle>Ready to Send Your Wishes?</AlertTitle>
+                <AlertTitle>Your Automatic Reminder is Ready!</AlertTitle>
                 <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2">
-                    <p>For your security, your browser requires one click to open your email app.</p>
+                    <p>To protect your account, your browser requires one final click to open your email client.</p>
                     <Button onClick={handleOpenEmail} disabled={isPreparingEmail || !emailContent} className="w-full sm:w-auto mt-2 sm:mt-0">
-                        {isPreparingEmail ? 'Preparing...' : 'Open Reminder Email'}
+                        {isPreparingEmail ? 'Preparing...' : 'Open My Reminder Email'}
                     </Button>
                 </AlertDescription>
             </Alert>
