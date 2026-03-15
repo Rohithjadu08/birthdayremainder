@@ -1,20 +1,16 @@
-
 'use client';
 
 import type { Student } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PartyPopper, MessageCircle, Mail } from 'lucide-react';
+import { PartyPopper, MessageCircle } from 'lucide-react';
 import Confetti from '@/components/shared/confetti';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase';
-import { generateBirthdayEmail } from '@/ai/flows/generate-birthday-email-flow';
-import type { GenerateBirthdayEmailOutput } from '@/ai/flows/generate-birthday-email-flow';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { capitalizeName } from '@/lib/utils';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface TodaysBirthdayCardProps {
   students: Student[];
@@ -23,8 +19,6 @@ interface TodaysBirthdayCardProps {
 export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps) {
   const { toast } = useToast();
   const { user } = useUser();
-  const [emailContent, setEmailContent] = useState<GenerateBirthdayEmailOutput | null>(null);
-  const [isPreparingEmail, setIsPreparingEmail] = useState(false);
 
   // A stable key based on the students celebrating their birthday today.
   const studentIds = useMemo(() => students.map(s => s.id).sort().join(','), [students]);
@@ -38,62 +32,24 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     const notificationKey = `birthdayNotification_${user.uid}_${todayStr}`;
     
-    // Show a toast notification once per day
+    // Show a popup (toast) notification once per day
     if (!sessionStorage.getItem(notificationKey)) {
         const capitalizedNames = students.map(s => capitalizeName(s.name));
         let description: string;
         if (students.length === 1) {
-            description = `It's ${capitalizedNames[0]}'s birthday today!`;
+            description = `It's ${capitalizedNames[0]}'s birthday today! Don't forget to send a wish.`;
         } else {
             const lastName = capitalizedNames.pop();
-            description = `It's ${capitalizedNames.join(', ')} and ${lastName}'s birthday today!`;
+            description = `It's ${capitalizedNames.join(', ')} and ${lastName}'s birthday today! Don't forget to send a wish.`;
         }
         toast({
-            title: "🎉 Happy Birthday!",
+            title: "🎉 Birthday Notification!",
             description: description,
             duration: 9000,
         });
         sessionStorage.setItem(notificationKey, 'true');
     }
-    
-    // Prepare email content in the background
-    const prepareEmail = async () => {
-        setIsPreparingEmail(true);
-        try {
-            const studentInfo = students.map(s => ({ name: s.name, department: s.department }));
-            const content = await generateBirthdayEmail({
-              students: studentInfo,
-              professorName: user.displayName || 'Professor',
-            });
-            setEmailContent(content);
-        } catch (error) {
-            console.error("Failed to generate birthday email:", error);
-            toast({
-              variant: "destructive",
-              title: "Email Preparation Failed",
-              description: "Could not generate the reminder email content.",
-            });
-        } finally {
-            setIsPreparingEmail(false);
-        }
-    };
-    
-    prepareEmail();
-
-  }, [studentIds, students, user, toast]); // Rerun only when the list of students with birthdays changes
-
-  const handleOpenEmail = () => {
-    if (!emailContent || !user?.email) {
-        toast({
-            variant: "destructive",
-            title: "Email Not Ready",
-            description: "The email content is still being prepared or your email is not available."
-        });
-        return;
-    }
-    const mailtoLink = `mailto:${user.email}?subject=${encodeURIComponent(emailContent.subject)}&body=${encodeURIComponent(emailContent.body)}`;
-    window.open(mailtoLink);
-  };
+  }, [studentIds, students, user, toast]);
 
   if (students.length === 0) {
     return null;
@@ -107,7 +63,7 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
                 Happy Birthday!
             </CardTitle>
             <CardDescription>
-                It's time to celebrate! Your automatic email reminder is ready to be opened.
+                It's time to celebrate! Send a wish to your students.
             </CardDescription>
       </CardHeader>
       <CardContent>
@@ -141,20 +97,6 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
             </div>
           ))}
         </div>
-        
-        <div className="mt-6">
-             <Alert>
-                <Mail className="h-4 w-4" />
-                <AlertTitle>Your Automatic Reminder is Ready!</AlertTitle>
-                <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2">
-                    <p>To protect your account, your browser requires one final click to open your email client.</p>
-                    <Button onClick={handleOpenEmail} disabled={isPreparingEmail || !emailContent} className="w-full sm:w-auto mt-2 sm:mt-0">
-                        {isPreparingEmail ? 'Preparing...' : 'Open My Reminder Email'}
-                    </Button>
-                </AlertDescription>
-            </Alert>
-        </div>
-
       </CardContent>
       <Confetti />
     </Card>
