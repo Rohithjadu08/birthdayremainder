@@ -3,9 +3,9 @@
 import type { Student } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PartyPopper, MessageCircle, Mail } from 'lucide-react';
+import { PartyPopper, MessageCircle } from 'lucide-react';
 import Confetti from '@/components/shared/confetti';
-import { useEffect, useCallback, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase';
 import { generateBirthdayEmail } from '@/ai/flows/generate-birthday-email-flow';
@@ -23,80 +23,64 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
   const { toast } = useToast();
   const { user } = useUser();
 
-  const handleSendReminderEmail = useCallback(async () => {
-    if (!user || students.length === 0) return;
-
-    try {
-      const studentInfo = students.map(s => ({ name: s.name, department: s.department }));
-      const emailContent: GenerateBirthdayEmailOutput = await generateBirthdayEmail({
-        students: studentInfo,
-        professorName: user.displayName || 'Professor',
-      });
-      
-      const mailtoLink = `mailto:${user.email}?subject=${encodeURIComponent(emailContent.subject)}&body=${encodeURIComponent(emailContent.body)}`;
-      
-      window.open(mailtoLink, '_blank');
-      
-      toast({
-          title: 'Email Drafted',
-          description: 'Your birthday reminder email draft has been opened in your email client.',
-      });
-    } catch (error) {
-      console.error("Failed to generate birthday email:", error);
-      toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Could not generate the reminder email.',
-      });
-    }
-  }, [user, students, toast]);
-  
-  // Create a stable dependency from the students list.
-  const studentIdString = useMemo(() => students.map(s => s.id).sort().join(','), [students]);
+  const studentIds = useMemo(() => students.map(s => s.id).sort().join(','), [students]);
 
   useEffect(() => {
     // This effect runs on the client after hydration.
-    // It is responsible for showing the one-time birthday notification.
+    // It shows a one-time notification and automatically drafts a reminder email.
 
-    // Guard against running on the server
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    if (students.length === 0 || !user) {
+    if (typeof window === 'undefined' || students.length === 0 || !user) {
       return;
     }
 
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     const notificationKey = `birthdayNotification_${user.uid}_${todayStr}`;
 
-    // Check if notification for today has already been sent in this session
     if (sessionStorage.getItem(notificationKey)) {
-        return;
+      return;
     }
 
-    let description;
+    // --- Show Toast Notification ---
     const capitalizedNames = students.map(s => capitalizeName(s.name));
-
+    let description;
     if (students.length === 1) {
       description = `It's ${capitalizedNames[0]}'s birthday today! Don't forget to wish them.`;
     } else {
       const lastName = capitalizedNames.pop();
       description = `It's ${capitalizedNames.join(', ')} and ${lastName}'s birthday today! Don't forget to wish them.`;
     }
-    
+
     toast({
       title: "🎉 Happy Birthday!",
       description: description,
       duration: 9000,
     });
     
-    // Mark notification as sent for this session.
+    // --- Automatically trigger email draft ---
+    const sendReminderEmail = async () => {
+      try {
+        const studentInfo = students.map(s => ({ name: s.name, department: s.department }));
+        const emailContent: GenerateBirthdayEmailOutput = await generateBirthdayEmail({
+          students: studentInfo,
+          professorName: user.displayName || 'Professor',
+        });
+        
+        const mailtoLink = `mailto:${user.email}?subject=${encodeURIComponent(emailContent.subject)}&body=${encodeURIComponent(emailContent.body)}`;
+        
+        window.open(mailtoLink, '_blank');
+        
+      } catch (error) {
+        console.error("Failed to automatically generate birthday email:", error);
+        // Silently fail without a user-facing toast as requested.
+      }
+    };
+
+    sendReminderEmail();
+    
+    // Mark as actioned for this session to avoid re-triggering on navigation.
     sessionStorage.setItem(notificationKey, 'true');
 
-    // We rely on the stable studentIdString to ensure this effect only re-runs
-    // when the list of people with birthdays actually changes.
-  }, [studentIdString, user, toast]);
+  }, [studentIds, students, user, toast]);
 
 
   if (students.length === 0) {
@@ -115,10 +99,6 @@ export default function TodaysBirthdayCard({ students }: TodaysBirthdayCardProps
                     Wishing a very happy birthday to the following students today!
                 </p>
             </div>
-            <Button variant="outline" size="sm" onClick={handleSendReminderEmail}>
-                <Mail className="mr-2 h-4 w-4" />
-                Send Email Reminder to Myself
-            </Button>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
